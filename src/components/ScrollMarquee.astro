@@ -1,11 +1,21 @@
-<section class="overflow-hidden border-y border-white/10 bg-[#0b0b0b] py-8 sm:py-11" aria-label="Neukee engineering approach">
-  <div class="scroll-marquee-track" data-scroll-marquee>
-    <div class="scroll-marquee-copy" aria-hidden="true">
-      <span>UPGRADE WITH EVIDENCE</span><span class="stroke">NOT GUESSWORK</span><span>SHIP WITH CONTEXT</span><span class="text-violet-300">NEUKEE / 001</span>
-    </div>
-    <div class="scroll-marquee-copy" aria-hidden="true">
-      <span>UPGRADE WITH EVIDENCE</span><span class="stroke">NOT GUESSWORK</span><span>SHIP WITH CONTEXT</span><span class="text-violet-300">NEUKEE / 001</span>
-    </div>
+<section class="marquee-band overflow-hidden border-y border-white/10 bg-[#0b0b0b] py-6 sm:py-9" aria-label="Neukee engineering approach">
+  <div class="marquee-track">
+    {[0, 1, 2, 3].map(() => (
+      <div class="marquee-copy" aria-hidden="true">
+        <span>UPGRADE WITH EVIDENCE</span><span class="stroke">NOT GUESSWORK</span><span>SHIP WITH CONTEXT</span><span class="text-violet-300">NEUKEE / 001</span>
+      </div>
+    ))}
   </div>
   <p class="sr-only">Upgrade with evidence, not guesswork. Ship with context.</p>
 </section>
+
+<style>
+  /* Four identical copies slide left by exactly two, so the loop is seamless even on ultra-wide screens. */
+  .marquee-track { display: flex; width: max-content; animation: marquee-loop 80s linear infinite; will-change: transform; }
+  .marquee-copy { display: flex; flex: none; align-items: center; gap: clamp(1.25rem, 4vw, 4rem); padding-right: clamp(1.25rem, 4vw, 4rem); white-space: nowrap; }
+  .marquee-copy span { font-family: var(--font-display), sans-serif; font-size: clamp(1.9rem, 6.2vw, 5.5rem); font-weight: 700; letter-spacing: -.06em; line-height: .95; }
+  .marquee-copy .stroke { color: transparent; -webkit-text-stroke: 1.2px rgba(212,212,212,.72); }
+  .marquee-band:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee-loop { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+  @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+</style>

@@ -30,9 +30,18 @@ const jsonLd = {
   image: new URL('/brand/og.png', site).toString(),
   ...(sources.length ? { citation: sources.map((source) => source.url) } : {}),
 };
+const section = canonicalPath.startsWith('/blog/') ? { name: 'Field notes', path: '/blog/' } : { name: 'Upgrade guides', path: '/guides/' };
+const breadcrumbLd = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Neukee', item: new URL('/', site).toString() },
+    { '@type': 'ListItem', position: 2, name: section.name, item: new URL(section.path, site).toString() },
+    { '@type': 'ListItem', position: 3, name: title, item: new URL(canonicalPath, site).toString() },
+  ],
+};
 ---
 
-<BaseLayout title={title} description={description} canonicalPath={canonicalPath} ogType="article" {jsonLd} noindex={underReview}>
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} ogType="article" jsonLd={{ '@graph': [jsonLd, breadcrumbLd] }} noindex={underReview}>
   <div class="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
     <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_250px]">
       <article class="min-w-0">

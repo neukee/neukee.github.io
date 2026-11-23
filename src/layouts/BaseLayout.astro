@@ -49,11 +49,19 @@ const applicationSchema = {
   isAccessibleForFree: true,
   publisher: { '@id': new URL('/#organization', site).toString() },
 };
+// A page can pass one schema.org node or a { '@graph': [...] } of several.
 const pageSchemaNodes = jsonLd
   ? (() => {
       const { ['@context']: context, ...pageSchema } = jsonLd;
       void context;
-      return [pageSchema];
+      const graph = (pageSchema as { '@graph'?: unknown[] })['@graph'];
+      return Array.isArray(graph)
+        ? graph.map((node) => {
+            const { ['@context']: nodeContext, ...rest } = node as Record<string, unknown>;
+            void nodeContext;
+            return rest;
+          })
+        : [pageSchema];
     })()
   : [];
 const schema = {
@@ -131,43 +139,6 @@ const schema = {
     });
   }
 
-  let lastScrollY = window.scrollY;
-  let marqueeShift = 0;
-  let scrollFramePending = false;
-  function updateScrollMarquee() {
-    if (scrollFramePending || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    scrollFramePending = true;
-    window.requestAnimationFrame(() => {
-      const currentScrollY = window.scrollY;
-      marqueeShift -= (currentScrollY - lastScrollY) * 0.22;
-      lastScrollY = currentScrollY;
-      document.querySelectorAll<HTMLElement>('[data-scroll-marquee]').forEach((track) => {
-        const cycleWidth = track.scrollWidth / 2;
-        const shift = cycleWidth ? ((marqueeShift % cycleWidth) + cycleWidth) % cycleWidth : marqueeShift;
-        track.style.setProperty('--scroll-shift', `${shift}px`);
-      });
-      document.querySelectorAll<HTMLElement>('[data-living-type]').forEach((typeLayer) => {
-        typeLayer.style.setProperty('--scroll-shift', `${marqueeShift * .35}px`);
-      });
-      updateStackSlides();
-      scrollFramePending = false;
-    });
-  }
-
-  function updateStackSlides() {
-    const slides = Array.from(document.querySelectorAll<HTMLElement>('[data-stack-slide]'));
-    slides.forEach((slide, index) => {
-      const next = slides[index + 1];
-      if (!next) {
-        slide.style.setProperty('--stack-progress', '0');
-        return;
-      }
-      const nextTop = next.getBoundingClientRect().top;
-      const progress = Math.max(0, Math.min(1, (window.innerHeight * .84 - nextTop) / (window.innerHeight * .52)));
-      slide.style.setProperty('--stack-progress', String(progress));
-    });
-  }
-
   function initializeSpotlights() {
     document.querySelectorAll<HTMLElement>('main article, main .glass-surface, main button, footer .social-squircle').forEach((item) => {
       item.classList.add('spotlight-card');
@@ -177,12 +148,9 @@ const schema = {
   initializeReveal();
   initializeSpotlights();
   document.addEventListener('astro:page-load', () => {
-    lastScrollY = window.scrollY;
     initializeReveal();
     initializeSpotlights();
-    updateStackSlides();
   });
-  window.addEventListener('scroll', updateScrollMarquee, { passive: true });
 </script>
 
 <style is:global>
@@ -216,16 +184,10 @@ const schema = {
   :is(a, button)[class*="bg-violet-400"]:hover::before, :is(a, button)[class*="bg-emerald-500"]:hover::before { transform: translateX(55%); }
   :is(a, button)[class*="bg-violet-400"]:hover, :is(a, button)[class*="bg-emerald-500"]:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.38), 0 14px 42px rgba(163,163,163,.36); filter: saturate(1.15); }
   :is(a, button)[class*="bg-violet-400"]:active, :is(a, button)[class*="bg-emerald-500"]:active, button:active { transform: scale(.96); }
-  .stack-stage { position: relative; min-height: calc(100svh + 5rem); padding-bottom: 5rem; }
-  .stack-slide { position: sticky; top: 5.25rem; z-index: var(--stack-order, 1); border-radius: 2rem; transform: scale(calc(1 - var(--stack-progress, 0) * .05)); transform-origin: top center; filter: brightness(calc(1 - var(--stack-progress, 0) * .12)); transition: transform .12s linear, filter .12s linear; }
-  @media (prefers-reduced-motion: reduce) { .stack-slide { transform: none; filter: none; } }
+  .stack-slide { border-radius: 2rem; }
   .eyebrow { font-family: var(--font-mono), monospace; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: #d4d4d4; }
   .display-outline { color: transparent; -webkit-text-stroke: 1.5px rgba(212,212,212,.92); }
   .dot-field { background-image: radial-gradient(rgba(212,212,212,.23) .8px, transparent .8px); background-size: 24px 24px; }
-  .scroll-marquee-track { display: flex; width: max-content; transform: translate3d(var(--scroll-shift, 0px), 0, 0); will-change: transform; }
-  .scroll-marquee-copy { display: flex; flex: none; align-items: center; gap: clamp(1.5rem, 5vw, 5rem); padding-right: clamp(1.5rem, 5vw, 5rem); white-space: nowrap; }
-  .scroll-marquee-copy span { font-family: var(--font-display), sans-serif; font-size: clamp(2.4rem, 8vw, 7rem); font-weight: 700; letter-spacing: -.075em; line-height: .9; }
-  .scroll-marquee-copy .stroke { color: transparent; -webkit-text-stroke: 1.3px rgba(212,212,212,.72); }
   ::view-transition-old(root) { animation: page-out .24s cubic-bezier(.7,0,.84,0) both; }
   ::view-transition-new(root) { animation: page-in .48s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes page-in { from { opacity: 0; transform: translateX(26px); filter: hue-rotate(-35deg) saturate(.75); } to { opacity: 1; transform: translateX(0); filter: hue-rotate(0) saturate(1); } }

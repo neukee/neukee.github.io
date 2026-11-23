@@ -2,8 +2,13 @@
   <canvas class="dependency-mesh" data-dependency-mesh></canvas>
   <div class="aurora-ribbon aurora-ribbon-one"></div>
   <div class="aurora-ribbon aurora-ribbon-two"></div>
-  <div class="living-type" data-living-type>
-    <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b> NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24</span>
+  <div class="living-type">
+    <div class="living-type-track">
+      <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b>&nbsp;</span>
+      <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b>&nbsp;</span>
+      <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b>&nbsp;</span>
+      <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b>&nbsp;</span>
+    </div>
   </div>
   <svg class="film-grain" xmlns="http://www.w3.org/2000/svg">
     <filter id="neukee-grain">
@@ -119,8 +124,6 @@
   window.addEventListener('pointermove', (event) => {
     pointer.targetX = event.clientX;
     pointer.targetY = event.clientY;
-    const typeLayer = document.querySelector<HTMLElement>('[data-living-type]');
-    typeLayer?.style.setProperty('--cursor-drift', `${(event.clientX / Math.max(window.innerWidth, 1) - .5) * 22}px`);
     const card = (event.target as Element | null)?.closest<HTMLElement>('.spotlight-card');
     if (card) {
       const bounds = card.getBoundingClientRect();
@@ -148,10 +151,12 @@
   .aurora-ribbon { position: absolute; width: 65vw; height: 55vh; border-radius: 50%; filter: blur(110px) saturate(160%); opacity: .16; mix-blend-mode: screen; animation: aurora-drift 23s ease-in-out infinite alternate; }
   .aurora-ribbon-one { top: -24vh; left: -12vw; background: radial-gradient(ellipse, rgba(163,163,163,.52), rgba(163,163,163,0) 68%); }
   .aurora-ribbon-two { right: -24vw; bottom: -34vh; background: radial-gradient(ellipse, rgba(163,163,163,.7), rgba(250,250,250,0) 70%); animation-duration: 29s; animation-direction: alternate-reverse; }
-  .living-type { position: absolute; top: 39%; left: -10vw; width: max-content; color: rgba(240,240,240,.035); font-family: var(--font-display), sans-serif; font-size: clamp(5rem, 17vw, 18rem); font-weight: 700; letter-spacing: -.085em; line-height: .8; white-space: nowrap; transform: translate3d(calc(var(--cursor-drift, 0px) + var(--scroll-shift, 0px)), 0, 0); transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-  .living-type b { color: rgba(212,212,212,.16); font-size: .58em; vertical-align: 16%; }
+  .living-type { position: absolute; top: 50%; left: 0; width: 100%; overflow: hidden; transform: translateY(-50%); color: rgba(240,240,240,.03); font-family: var(--font-display), sans-serif; font-size: clamp(3.5rem, 11vw, 11rem); font-weight: 700; letter-spacing: -.07em; line-height: .85; white-space: nowrap; }
+  .living-type-track { display: flex; width: max-content; animation: living-type-loop 220s linear infinite; will-change: transform; }
+  @keyframes living-type-loop { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
+  .living-type b { color: rgba(212,212,212,.12); font-size: .5em; vertical-align: 18%; }
   .film-grain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; mix-blend-mode: soft-light; }
   @keyframes aurora-drift { from { transform: translate3d(-4vw,-2vh,0) rotate(-8deg) scale(1); } to { transform: translate3d(8vw,5vh,0) rotate(9deg) scale(1.13); } }
-  @media (max-width: 700px) { .aurora-ribbon { width: 110vw; height: 40vh; filter: blur(80px); opacity: .12; } .living-type { top: 43%; font-size: 30vw; } }
-  @media (prefers-reduced-motion: reduce) { .aurora-ribbon, .living-type { animation: none; transition: none; } }
+  @media (max-width: 700px) { .aurora-ribbon { width: 110vw; height: 40vh; filter: blur(80px); opacity: .12; } .living-type { font-size: 18vw; } }
+  @media (prefers-reduced-motion: reduce) { .aurora-ribbon, .living-type-track { animation: none; transition: none; } }
 </style>
