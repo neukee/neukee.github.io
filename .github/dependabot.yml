@@ -8,6 +8,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Major versions (Tailwind 4, TypeScript 7, ...) need a deliberate migration,
+    # not a weekly pull request. Minor and patch updates still arrive.
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       astro:
         patterns: ['astro', '@astrojs/*']
