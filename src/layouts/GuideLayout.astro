@@ -1,45 +1,67 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { isUnverified } from '../content-status.mjs';
 
 interface Props {
   title: string;
   description: string;
   canonicalPath: string;
   published?: string;
+  modified?: string;
+  /** Official sources the page was checked against. Shown at the end of the article. */
+  sources?: { title: string; url: string }[];
+  /** Keep a page out of search results until its technical claims are verified. */
+  noindex?: boolean;
 }
 
-const { title, description, canonicalPath, published = '2026-11-23' } = Astro.props;
+const { title, description, canonicalPath, published = '2026-11-23', modified = published, sources = [], noindex = false } = Astro.props;
+const site = Astro.site ?? new URL('https://neukee.github.io');
+const underReview = noindex || isUnverified(canonicalPath);
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: title,
   description,
   datePublished: published,
-  dateModified: published,
-  author: { '@type': 'Organization', name: 'Neukee', url: 'https://neukee.github.io' },
-  publisher: { '@type': 'Organization', name: 'Neukee', url: 'https://neukee.github.io' },
-  mainEntityOfPage: `https://neukee.github.io${canonicalPath}`,
+  dateModified: modified,
+  author: { '@id': new URL('/#organization', site).toString() },
+  publisher: { '@id': new URL('/#organization', site).toString() },
+  mainEntityOfPage: new URL(canonicalPath, site).toString(),
+  image: new URL('/brand/og.png', site).toString(),
+  ...(sources.length ? { citation: sources.map((source) => source.url) } : {}),
 };
 ---
 
-<BaseLayout title={title} description={description} canonicalPath={canonicalPath} ogType="article" {jsonLd}>
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} ogType="article" {jsonLd} noindex={underReview}>
   <div class="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
     <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_250px]">
       <article class="min-w-0">
         <a href="/guides/" class="font-mono text-xs text-emerald-300 hover:text-emerald-200">← ALL UPGRADE GUIDES</a>
         <header class="mb-10 mt-6 border-b border-zinc-800 pb-8" data-reveal>
-          <p class="font-mono text-xs uppercase tracking-[.2em] text-zinc-500">Engineering field guide · Updated {published}</p>
+          <p class="font-mono text-xs uppercase tracking-[.2em] text-zinc-500">Engineering field guide · Updated {modified}</p>
           <h1 class="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-zinc-50 sm:text-5xl">{title}</h1>
           <p class="mt-5 max-w-3xl text-lg leading-8 text-zinc-400">{description}</p>
+          {underReview && (
+            <p class="mt-6 max-w-3xl rounded-lg border border-amber-300/20 bg-amber-300/[.05] p-4 text-sm leading-6 text-amber-100/80">
+              Under technical review: we are checking this page against the official release notes. Treat it as background reading, and confirm any version-specific detail in the official documentation before acting on it.
+            </p>
+          )}
         </header>
         <div class="prose-technical max-w-none" data-reveal><slot /></div>
+        {sources.length > 0 && (
+          <section class="prose-technical mt-12 border-t border-zinc-800 pt-8" aria-labelledby="sources-heading">
+            <h2 id="sources-heading">Official sources</h2>
+            <p>Every claim on this page was checked against these primary sources on {modified}.</p>
+            <ul>{sources.map((source) => <li><a href={source.url} rel="noreferrer" target="_blank">{source.title}</a></li>)}</ul>
+          </section>
+        )}
         <aside class="glass-surface mt-14 rounded-2xl p-7 sm:p-9" data-reveal>
           <p class="font-mono text-xs uppercase tracking-[.18em] text-emerald-300">Move from guesswork to evidence</p>
           <h2 class="mt-3 text-2xl font-semibold text-zinc-50">Know your blockers before the upgrade PR.</h2>
-          <p class="mt-3 max-w-2xl leading-7 text-zinc-400">Neukee scans runtime settings, lockfiles, and application behavior to make upgrade risks reviewable. Start with the open-source project or request a guided fleet readiness audit.</p>
+          <p class="mt-3 max-w-2xl leading-7 text-zinc-400">Neukee is an open-source, local-first scanner for Node.js and Next.js upgrades: runtime drift, native addons and Next.js 16 changes, each finding linked to the official release note. Version 0.1.0 is planned for December 8, 2026.</p>
           <div class="mt-6 flex flex-wrap gap-3">
-            <a class="rounded-md bg-violet-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-violet-300" href="https://github.com/neukee/neukee" target="_blank" rel="noreferrer">Explore Neukee on GitHub</a>
-            <a class="rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200 hover:border-violet-300/50" href="/#fleet-audit">Request a fleet audit</a>
+            <a class="rounded-md bg-violet-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-violet-300" href="https://github.com/neukee/neukee" target="_blank" rel="noreferrer">Follow Neukee on GitHub</a>
+            <a class="rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-200 hover:border-violet-300/50" href="/#upgrade-audit">Request an upgrade audit</a>
           </div>
         </aside>
       </article>

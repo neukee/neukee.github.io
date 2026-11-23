@@ -1,29 +1,29 @@
-<section id="fleet-audit" class="stack-slide border-y border-zinc-800 bg-[#0c0c0e]" data-stack-slide style="--stack-order: 5">
+<section id="upgrade-audit" class="stack-slide border-y border-zinc-800 bg-[#0c0c0e]" data-stack-slide style="--stack-order: 5">
   <div class="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
     <div class="mx-auto max-w-3xl text-center">
-      <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">Node.js 22 EOL · April 30, 2027</p>
-      <h2 class="mt-4 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Turn your fleet’s upgrade into a plan.</h2>
-      <p class="mt-4 leading-7 text-zinc-400">Get a clear view of runtime, framework, and dependency blockers while there’s still room to fix them safely.</p>
+      <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">Next.js 16 and Node.js 24 upgrades</p>
+      <h2 class="mt-4 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Turn your next upgrade into a plan.</h2>
+      <p class="mt-4 leading-7 text-zinc-400">Founding upgrade audits start after version 0.1.0 ships on December 8, 2026. Your code stays on your machine: you run the open-source scanner locally and share only its report.</p>
     </div>
     <div class="mt-12 grid gap-5 lg:grid-cols-2">
       <div class="rounded-2xl border border-zinc-800 bg-surface p-7 sm:p-9">
         <p class="font-mono text-xs uppercase tracking-[.16em] text-zinc-500">01 / Live working session</p>
-        <h3 class="mt-4 text-2xl font-semibold">Free 15-minute fleet readiness call</h3>
+        <h3 class="mt-4 text-2xl font-semibold">Free 15-minute upgrade readiness call</h3>
         <p class="mt-3 leading-7 text-zinc-400">Bring a representative service or a list of the upgrade questions blocking your team. We’ll use the time to find the next useful action—not to deliver a generic sales presentation.</p>
         <ul class="mt-6 space-y-3 text-sm text-zinc-300">
-          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Live scan of 1–2 repositories</li>
-          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Node 24/26 and Next.js 16 blocker check</li>
-          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Practical CI-time and engineering-effort estimate</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Walk through one service and its upgrade path</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Next.js 16 and Node.js 24 blockers to look for</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> A rough effort estimate and the safest order of work</li>
         </ul>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a class="rounded-md bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" href="https://cal.com" target="_blank" rel="noreferrer">Book a readiness call</a>
-          <a class="rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-500" href="mailto:venuuu.nyc@proton.me?subject=Fleet%20Readiness%20Audit">Email instead</a>
+          <a class="rounded-md bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" href="mailto:venuuu.nyc@proton.me?subject=Upgrade%20readiness%20call">Request a readiness call</a>
+          <a class="rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-500" href="https://github.com/neukee/neukee" target="_blank" rel="noreferrer">Follow the project</a>
         </div>
       </div>
       <div class="rounded-2xl border border-zinc-800 bg-surface p-7 sm:p-9">
         <p class="font-mono text-xs uppercase tracking-[.16em] text-zinc-500">02 / Written deliverable</p>
-        <h3 class="mt-4 text-2xl font-semibold">Request a 48-hour fleet audit blueprint</h3>
-        <p class="mt-3 leading-7 text-zinc-400">Tell us the shape of your fleet and the migration on your roadmap. The static form creates an email draft to our team; it does not transmit data to a backend.</p>
+        <h3 class="mt-4 text-2xl font-semibold">Reserve a founding upgrade audit</h3>
+        <p class="mt-3 leading-7 text-zinc-400">A written report of every breaking change that hits your repository, by file and line, with the fix and the official source. We never ask for repository access. This form only drafts an email in your own mail app.</p>
         <form class="mt-6 space-y-4" data-audit-form>
           <label class="block text-sm text-zinc-300">Work email
             <input class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-emerald-500" type="email" name="email" autocomplete="email" placeholder="you@company.com" required />
@@ -39,12 +39,12 @@
             </label>
             <label class="block text-sm text-zinc-300">Primary target
               <select class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-200 focus:border-emerald-500" name="target" required>
-                <option value="" selected disabled>Select target</option><option>Node.js 22 EOL → Node 24 / 26</option><option>Next.js 15 → 16</option><option>Both Node.js &amp; Next.js</option><option>Continuous AI/dependency PR verification</option>
+                <option value="" selected disabled>Select target</option><option>Node.js 22 → 24</option><option>Next.js 15 → 16</option><option>Both Node.js &amp; Next.js</option><option>Checks on every upgrade PR (planned)</option>
               </select>
             </label>
           </div>
           <p class="min-h-5 text-xs text-zinc-500" data-form-message aria-live="polite">No network request is made. Your email app will open with a pre-filled request.</p>
-          <button class="w-full rounded-md bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" type="submit">Prepare my audit request</button>
+          <button class="w-full rounded-md bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" type="submit">Prepare my request</button>
         </form>
         <div class="mt-6 hidden rounded-lg border border-emerald-500/30 bg-emerald-500/[.07] p-5" data-confirmation aria-live="polite">
           <h4 class="font-semibold text-emerald-200">Your request is ready</h4>
@@ -62,7 +62,7 @@
 
 <script>
   const checklist = [
-    'Neukee fleet readiness call checklist',
+    'Neukee upgrade readiness call checklist',
     '',
     '1. Bring the repositories and runtime versions in scope.',
     '2. Identify deployment targets (containers, functions, or managed platforms).',
@@ -71,7 +71,7 @@
     '5. Never share credentials, customer data, or production secrets.',
   ].join('\n');
 
-  function initializeFleetAudit() {
+  function initializeUpgradeAudit() {
     const form = document.querySelector<HTMLFormElement>('[data-audit-form]');
     const confirmation = document.querySelector<HTMLElement>('[data-confirmation]');
     const formMessage = document.querySelector<HTMLElement>('[data-form-message]');
@@ -91,11 +91,11 @@
       }
       if (confirmation) confirmation.classList.remove('hidden');
       if (formMessage) formMessage.textContent = 'Your email draft is open. Review it and press Send to deliver your request.';
-      const subject = `Fleet audit blueprint request — ${company}`;
+      const subject = `Founding upgrade audit request — ${company}`;
       const body = [
         'Hello Neukee,',
         '',
-        'Please prepare a fleet audit blueprint.',
+        'I would like to reserve a founding upgrade audit.',
         `Work email: ${email}`,
         `Company / GitHub organization: ${company}`,
         `Repository count: ${repositories}`,
@@ -123,11 +123,11 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'neukee-fleet-audit-checklist.txt';
+      link.download = 'neukee-upgrade-audit-checklist.txt';
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
   }
-  initializeFleetAudit();
-  document.addEventListener('astro:page-load', initializeFleetAudit);
+  initializeUpgradeAudit();
+  document.addEventListener('astro:page-load', initializeUpgradeAudit);
 </script>

@@ -7,10 +7,15 @@ export default {
         ink: '#09090B',
         surface: '#111113',
         line: '#27272A',
+        // Brand: monochrome. The violet and emerald scales are remapped to neutrals so
+        // accent classes render in the Neukee black-and-white identity.
+        violet: {
+          100: '#FAFAFA', 200: '#F0F0F0', 300: '#D4D4D4', 400: '#FAFAFA',
+          500: '#E5E5E5', 600: '#737373',
+        },
         emerald: {
-          400: '#34D399',
-          500: '#10B981',
-          950: '#052E16',
+          100: '#FAFAFA', 200: '#F0F0F0', 300: '#E5E5E5', 400: '#FAFAFA',
+          500: '#F5F5F5', 950: '#0A0A0A',
         },
       },
       fontFamily: {

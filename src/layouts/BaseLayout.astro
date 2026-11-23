@@ -3,6 +3,10 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import LivingBackdrop from '../components/LivingBackdrop.astro';
 import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/jetbrains-mono';
+import { CONTACT_EMAIL, PROFILES } from '../site';
 
 interface Props {
   title: string;
@@ -10,26 +14,40 @@ interface Props {
   canonicalPath?: string;
   ogType?: 'website' | 'article';
   jsonLd?: Record<string, unknown>;
+  noindex?: boolean;
 }
 
-const { title, description, canonicalPath = Astro.url.pathname, ogType = 'website', jsonLd } = Astro.props;
-const canonical = new URL(canonicalPath, 'https://neukee.github.io').toString();
+const { title, description, canonicalPath = Astro.url.pathname, ogType = 'website', jsonLd, noindex = false } = Astro.props;
+const site = Astro.site ?? new URL('https://neukee.github.io');
+const canonical = new URL(canonicalPath, site).toString();
+const ogImage = new URL('/brand/og.png', site).toString();
 const organizationSchema = {
   '@type': 'Organization',
+  '@id': new URL('/#organization', site).toString(),
   name: 'Neukee',
-  url: 'https://neukee.github.io',
-  logo: 'https://neukee.github.io/neukee-logo-mark.png',
-  email: 'venuuu.nyc@proton.me',
+  url: site.toString(),
+  logo: new URL('/brand/neukee-logo-512.png', site).toString(),
+  email: CONTACT_EMAIL,
+  sameAs: Object.values(PROFILES),
+};
+const websiteSchema = {
+  '@type': 'WebSite',
+  '@id': new URL('/#website', site).toString(),
+  name: 'Neukee',
+  url: site.toString(),
+  publisher: { '@id': new URL('/#organization', site).toString() },
 };
 const applicationSchema = {
   '@type': 'SoftwareApplication',
   name: 'Neukee',
   applicationCategory: 'DeveloperApplication',
-  operatingSystem: 'Linux, macOS',
-  description,
-  url: 'https://neukee.github.io',
-  codeRepository: 'https://github.com/neukee/neukee',
+  operatingSystem: 'Linux, macOS, Windows',
+  description: 'Open-source, local-first scanner that finds what breaks before you upgrade Node.js or Next.js. Pre-release; version 0.1.0 is planned for December 8, 2026.',
+  url: site.toString(),
+  codeRepository: PROFILES.github,
   license: 'https://www.apache.org/licenses/LICENSE-2.0',
+  isAccessibleForFree: true,
+  publisher: { '@id': new URL('/#organization', site).toString() },
 };
 const pageSchemaNodes = jsonLd
   ? (() => {
@@ -40,7 +58,7 @@ const pageSchemaNodes = jsonLd
   : [];
 const schema = {
   '@context': 'https://schema.org',
-  '@graph': [organizationSchema, applicationSchema, ...pageSchemaNodes],
+  '@graph': [organizationSchema, websiteSchema, applicationSchema, ...pageSchemaNodes],
 };
 ---
 
@@ -50,24 +68,28 @@ const schema = {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#08070b" />
+    <meta name="theme-color" content="#0a0a0a" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="apple-touch-icon" href="/brand/neukee-logo-512.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content="Neukee" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content="https://neukee.github.io/og-preview.svg" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Neukee: know what breaks before you upgrade Node.js or Next.js." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content="https://neukee.github.io/og-preview.svg" />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:site" content="@neukee4dev" />
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
     <ClientRouter />
     <slot name="head" />
@@ -164,46 +186,46 @@ const schema = {
 </script>
 
 <style is:global>
-  :root { color-scheme: dark; --font-display: "Space Grotesk"; --font-sans: "Inter"; --font-mono: "JetBrains Mono"; }
-  html { scroll-padding-top: 6rem; scroll-behavior: smooth; background: #08070b; }
+  :root { color-scheme: dark; --font-display: "Space Grotesk Variable"; --font-sans: "Inter Variable"; --font-mono: "JetBrains Mono Variable"; }
+  html { scroll-padding-top: 6rem; scroll-behavior: smooth; background: #0a0a0a; }
   body { margin: 0; }
   h1, h2, h3, h4, h5, h6 { font-family: var(--font-display), Inter, ui-sans-serif, system-ui, sans-serif; text-wrap: balance; letter-spacing: -.02em; }
   h1 { letter-spacing: -.035em; }
-  ::selection { color: #f5f3ff; }
-  :focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
+  ::selection { color: #fafafa; }
+  :focus-visible { outline: 2px solid #d4d4d4; outline-offset: 3px; }
   html.js-motion [data-reveal] { opacity: 0; transform: translateY(20px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
   html.js-motion [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
   .glass-surface, .bg-surface { border: 1px solid rgba(255,255,255,.12); background: linear-gradient(145deg, rgba(255,255,255,.085), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 24px 80px rgba(0,0,0,.32); backdrop-filter: blur(24px) saturate(200%); }
   .rounded-xl, .rounded-2xl, .rounded-lg, .rounded-md { border-radius: 2rem; }
   .rounded-full { border-radius: 9999px; }
   :is(article, .glass-surface, .bg-surface, .spotlight-card) { position: relative; isolation: isolate; overflow: hidden; border-color: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 24px 80px rgba(0,0,0,.24); }
-  :is(article, .glass-surface, .bg-surface, .spotlight-card)::after { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(167,139,250,.19), transparent 68%); content: ""; opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+  :is(article, .glass-surface, .bg-surface, .spotlight-card)::after { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(212,212,212,.19), transparent 68%); content: ""; opacity: 0; pointer-events: none; transition: opacity .25s ease; }
   :is(article, .glass-surface, .bg-surface, .spotlight-card):hover::after { opacity: 1; }
-  main :is(section, article, div)[class*="bg-[#"] { border-color: rgba(255,255,255,.13); background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(17,16,24,.72) 58%, rgba(124,58,237,.045)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 22px 65px rgba(0,0,0,.2); backdrop-filter: blur(24px) saturate(180%); }
+  main :is(section, article, div)[class*="bg-[#"] { border-color: rgba(255,255,255,.13); background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(18,18,18,.72) 58%, rgba(163,163,163,.045)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 22px 65px rgba(0,0,0,.2); backdrop-filter: blur(24px) saturate(180%); }
   button { border-radius: 1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.12); backdrop-filter: blur(18px) saturate(170%); transition: transform .2s ease, box-shadow .25s ease, border-color .25s ease; }
   :is(input, select, textarea) { border-radius: 1.25rem !important; border-color: rgba(255,255,255,.15) !important; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(0,0,0,.24)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.1); backdrop-filter: blur(18px) saturate(170%); }
   .social-squircle { position: relative; display: inline-flex; height: 46px; width: 46px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,.15); border-radius: 17px; background: linear-gradient(145deg, rgba(255,255,255,.17), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 8px 26px rgba(0,0,0,.3); backdrop-filter: blur(20px) saturate(180%); color: #e4e4e7; transition: transform .2s ease, box-shadow .25s ease, background .25s ease; }
   .social-squircle svg { height: 19px; width: 19px; fill: currentColor; }
   .social-squircle:hover { transform: translateY(-2px); color: white; }
-  .social-squircle.is-active { border-color: rgba(56,189,248,.7); background: linear-gradient(145deg, #0A84FF, #38BDF8); box-shadow: inset 0 1px 0 rgba(255,255,255,.44), 0 0 28px rgba(10,132,255,.48); color: white; }
+  .social-squircle.is-active { border-color: rgba(250,250,250,.7); background: linear-gradient(145deg, #fafafa, #d4d4d4); box-shadow: inset 0 1px 0 rgba(255,255,255,.44), 0 0 28px rgba(250,250,250,.2); color: #0a0a0a; }
   .social-squircle.is-active::before { position: absolute; inset: -60% -30%; background: linear-gradient(110deg, transparent 38%, rgba(255,255,255,.75) 49%, transparent 60%); content: ""; transform: translateX(-100%); animation: shineSweep .8s ease-out; }
   .social-squircle.is-active svg { position: relative; z-index: 2; }
   @keyframes shineSweep { to { transform: translateX(100%); } }
-  :is(a, button)[class*="bg-violet-400"], :is(a, button)[class*="bg-emerald-500"] { position: relative; isolation: isolate; overflow: hidden; border: 1px solid rgba(255,255,255,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 10px 32px rgba(124,58,237,.25); transition: transform .2s ease, box-shadow .25s ease, filter .25s ease; }
+  :is(a, button)[class*="bg-violet-400"], :is(a, button)[class*="bg-emerald-500"] { position: relative; isolation: isolate; overflow: hidden; border: 1px solid rgba(255,255,255,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 10px 32px rgba(163,163,163,.25); transition: transform .2s ease, box-shadow .25s ease, filter .25s ease; }
   :is(a, button)[class*="bg-violet-400"]::before, :is(a, button)[class*="bg-emerald-500"]::before { position: absolute; inset: -100% -30%; z-index: -1; background: linear-gradient(110deg, transparent 44%, rgba(255,255,255,.42) 50%, transparent 56%); content: ""; transform: translateX(-55%); transition: transform .7s ease; }
   :is(a, button)[class*="bg-violet-400"]:hover::before, :is(a, button)[class*="bg-emerald-500"]:hover::before { transform: translateX(55%); }
-  :is(a, button)[class*="bg-violet-400"]:hover, :is(a, button)[class*="bg-emerald-500"]:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.38), 0 14px 42px rgba(124,58,237,.36); filter: saturate(1.15); }
+  :is(a, button)[class*="bg-violet-400"]:hover, :is(a, button)[class*="bg-emerald-500"]:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.38), 0 14px 42px rgba(163,163,163,.36); filter: saturate(1.15); }
   :is(a, button)[class*="bg-violet-400"]:active, :is(a, button)[class*="bg-emerald-500"]:active, button:active { transform: scale(.96); }
   .stack-stage { position: relative; min-height: calc(100svh + 5rem); padding-bottom: 5rem; }
   .stack-slide { position: sticky; top: 5.25rem; z-index: var(--stack-order, 1); border-radius: 2rem; transform: scale(calc(1 - var(--stack-progress, 0) * .05)); transform-origin: top center; filter: brightness(calc(1 - var(--stack-progress, 0) * .12)); transition: transform .12s linear, filter .12s linear; }
   @media (prefers-reduced-motion: reduce) { .stack-slide { transform: none; filter: none; } }
-  .eyebrow { font-family: "JetBrains Mono", monospace; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: #c4b5fd; }
-  .display-outline { color: transparent; -webkit-text-stroke: 1.5px rgba(196,181,253,.92); }
-  .dot-field { background-image: radial-gradient(rgba(196,181,253,.23) .8px, transparent .8px); background-size: 24px 24px; }
+  .eyebrow { font-family: var(--font-mono), monospace; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: #d4d4d4; }
+  .display-outline { color: transparent; -webkit-text-stroke: 1.5px rgba(212,212,212,.92); }
+  .dot-field { background-image: radial-gradient(rgba(212,212,212,.23) .8px, transparent .8px); background-size: 24px 24px; }
   .scroll-marquee-track { display: flex; width: max-content; transform: translate3d(var(--scroll-shift, 0px), 0, 0); will-change: transform; }
   .scroll-marquee-copy { display: flex; flex: none; align-items: center; gap: clamp(1.5rem, 5vw, 5rem); padding-right: clamp(1.5rem, 5vw, 5rem); white-space: nowrap; }
-  .scroll-marquee-copy span { font-family: "Space Grotesk", sans-serif; font-size: clamp(2.4rem, 8vw, 7rem); font-weight: 700; letter-spacing: -.075em; line-height: .9; }
-  .scroll-marquee-copy .stroke { color: transparent; -webkit-text-stroke: 1.3px rgba(196,181,253,.72); }
+  .scroll-marquee-copy span { font-family: var(--font-display), sans-serif; font-size: clamp(2.4rem, 8vw, 7rem); font-weight: 700; letter-spacing: -.075em; line-height: .9; }
+  .scroll-marquee-copy .stroke { color: transparent; -webkit-text-stroke: 1.3px rgba(212,212,212,.72); }
   ::view-transition-old(root) { animation: page-out .24s cubic-bezier(.7,0,.84,0) both; }
   ::view-transition-new(root) { animation: page-in .48s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes page-in { from { opacity: 0; transform: translateX(26px); filter: hue-rotate(-35deg) saturate(.75); } to { opacity: 1; transform: translateX(0); filter: hue-rotate(0) saturate(1); } }
@@ -219,10 +241,10 @@ const schema = {
   .prose-technical p { margin-top: 1rem; }
   .prose-technical ul, .prose-technical ol { margin: 1rem 0; padding-left: 1.4rem; }
   .prose-technical li { margin: .45rem 0; }
-  .prose-technical li::marker { color: #a78bfa; }
-  .prose-technical a { color: #c4b5fd; text-decoration: underline; text-underline-offset: 3px; }
+  .prose-technical li::marker { color: #d4d4d4; }
+  .prose-technical a { color: #d4d4d4; text-decoration: underline; text-underline-offset: 3px; }
   .prose-technical :not(pre) > code { border: 1px solid rgba(255,255,255,.12); border-radius: .75rem; background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035)); padding: .12rem .4rem; font-family: var(--font-mono), monospace; font-size: .88em; color: #e4e4e7; }
-  .prose-technical pre { overflow-x: auto; margin: 1.25rem 0; border: 1px solid rgba(255,255,255,.12); border-radius: 1.5rem; background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(8,7,11,.82)); padding: 1.25rem; font-family: var(--font-mono), monospace; font-size: .82rem; line-height: 1.75; color: #d4d4d8; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 18px 50px rgba(0,0,0,.2); }
+  .prose-technical pre { overflow-x: auto; margin: 1.25rem 0; border: 1px solid rgba(255,255,255,.12); border-radius: 1.5rem; background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(10,10,10,.82)); padding: 1.25rem; font-family: var(--font-mono), monospace; font-size: .82rem; line-height: 1.75; color: #d4d4d8; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 18px 50px rgba(0,0,0,.2); }
   .prose-technical pre code { font: inherit; }
   .prose-technical table { width: 100%; margin: 1.5rem 0; border: 1px solid rgba(255,255,255,.12); border-collapse: separate; border-spacing: 0; border-radius: 1.25rem; overflow: hidden; background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.015)); font-size: .92rem; }
   .prose-technical th, .prose-technical td { border: 1px solid #27272a; padding: .75rem; text-align: left; vertical-align: top; }

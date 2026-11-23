@@ -3,7 +3,7 @@
   <div class="aurora-ribbon aurora-ribbon-one"></div>
   <div class="aurora-ribbon aurora-ribbon-two"></div>
   <div class="living-type" data-living-type>
-    <span>NODE 26 <b>•</b> ZERO EGRESS <b>•</b> DETERMINISTIC <b>•</b> NEXT 16 <b>•</b> NODE 26 <b>•</b> ZERO EGRESS <b>•</b> DETERMINISTIC <b>•</b> NEXT 16</span>
+    <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b> NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24</span>
   </div>
   <svg class="film-grain" xmlns="http://www.w3.org/2000/svg">
     <filter id="neukee-grain">
@@ -71,7 +71,7 @@
       const point = meshPoints[index];
       if (!point) continue;
       const glow = .18 + (Math.sin(point.phase + time * .0002) + 1) * .08;
-      context.fillStyle = `rgba(196,181,253,${glow})`;
+      context.fillStyle = `rgba(212,212,212,${glow})`;
       context.beginPath();
       context.arc(point.x, point.y, 1.05, 0, Math.PI * 2);
       context.fill();
@@ -82,7 +82,7 @@
         const dy = point.y - next.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < reach) {
-          context.strokeStyle = `rgba(167,139,250,${(1 - distance / reach) * .13})`;
+          context.strokeStyle = `rgba(212,212,212,${(1 - distance / reach) * .13})`;
           context.lineWidth = .65;
           context.beginPath();
           context.moveTo(point.x, point.y);
@@ -92,7 +92,7 @@
       }
       const cursorDistance = Math.hypot(point.x - pointer.x, point.y - pointer.y);
       if (cursorDistance < 170) {
-        context.strokeStyle = `rgba(52,211,153,${(1 - cursorDistance / 170) * .28})`;
+        context.strokeStyle = `rgba(212,212,212,${(1 - cursorDistance / 170) * .28})`;
         context.lineWidth = .8;
         context.beginPath();
         context.moveTo(point.x, point.y);
@@ -143,13 +143,13 @@
 </script>
 
 <style>
-  .living-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #08070b; }
+  .living-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #0a0a0a; }
   .dependency-mesh { position: absolute; inset: 0; opacity: .8; }
   .aurora-ribbon { position: absolute; width: 65vw; height: 55vh; border-radius: 50%; filter: blur(110px) saturate(160%); opacity: .16; mix-blend-mode: screen; animation: aurora-drift 23s ease-in-out infinite alternate; }
-  .aurora-ribbon-one { top: -24vh; left: -12vw; background: radial-gradient(ellipse, rgba(16,185,129,.52), rgba(16,185,129,0) 68%); }
-  .aurora-ribbon-two { right: -24vw; bottom: -34vh; background: radial-gradient(ellipse, rgba(124,58,237,.7), rgba(56,189,248,0) 70%); animation-duration: 29s; animation-direction: alternate-reverse; }
-  .living-type { position: absolute; top: 39%; left: -10vw; width: max-content; color: rgba(233,227,255,.035); font-family: "Space Grotesk", sans-serif; font-size: clamp(5rem, 17vw, 18rem); font-weight: 700; letter-spacing: -.085em; line-height: .8; white-space: nowrap; transform: translate3d(calc(var(--cursor-drift, 0px) + var(--scroll-shift, 0px)), 0, 0); transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-  .living-type b { color: rgba(167,139,250,.16); font-size: .58em; vertical-align: 16%; }
+  .aurora-ribbon-one { top: -24vh; left: -12vw; background: radial-gradient(ellipse, rgba(163,163,163,.52), rgba(163,163,163,0) 68%); }
+  .aurora-ribbon-two { right: -24vw; bottom: -34vh; background: radial-gradient(ellipse, rgba(163,163,163,.7), rgba(250,250,250,0) 70%); animation-duration: 29s; animation-direction: alternate-reverse; }
+  .living-type { position: absolute; top: 39%; left: -10vw; width: max-content; color: rgba(240,240,240,.035); font-family: var(--font-display), sans-serif; font-size: clamp(5rem, 17vw, 18rem); font-weight: 700; letter-spacing: -.085em; line-height: .8; white-space: nowrap; transform: translate3d(calc(var(--cursor-drift, 0px) + var(--scroll-shift, 0px)), 0, 0); transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  .living-type b { color: rgba(212,212,212,.16); font-size: .58em; vertical-align: 16%; }
   .film-grain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; mix-blend-mode: soft-light; }
   @keyframes aurora-drift { from { transform: translate3d(-4vw,-2vh,0) rotate(-8deg) scale(1); } to { transform: translate3d(8vw,5vh,0) rotate(9deg) scale(1.13); } }
   @media (max-width: 700px) { .aurora-ribbon { width: 110vw; height: 40vh; filter: blur(80px); opacity: .12; } .living-type { top: 43%; font-size: 30vw; } }
