@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'Neukee trust center: security design, privacy boundaries, responsible disclosure, CI isolation guidance, and the current limits of the product.';
+---
+
+<BaseLayout title="Trust Center | Neukee" {description} canonicalPath="/trust/">
+  <section class="relative isolate overflow-hidden border-b border-white/10 px-5 py-20 sm:py-28" data-reveal>
+    <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_85%_15%,rgba(124,58,237,.2),transparent_40%),linear-gradient(135deg,#08070b,#100d17)]"></div>
+    <div class="mx-auto max-w-7xl">
+      <p class="eyebrow">Trust is a set of inspectable decisions</p>
+      <h1 class="mt-5 max-w-4xl text-5xl font-semibold leading-[.96] tracking-[-.05em] sm:text-7xl">A clear boundary around your code.</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">A concise reference for teams evaluating Neukee, the site, and the CI environment around an upgrade scan. Review the linked architecture and validate the version you run.</p>
+    </div>
+  </section>
+  <section class="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-20">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">Source handling</p><h2 class="mt-4 text-xl font-semibold">Local-first scan path</h2><p class="mt-3 text-sm leading-7 text-zinc-400">Static analysis is intended to run against the checkout on your machine or CI runner. The scanner should not need to upload application source to produce a report.</p></article>
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">Execution</p><h2 class="mt-4 text-xl font-semibold">No install hooks for analysis</h2><p class="mt-3 text-sm leading-7 text-zinc-400">A metadata scan should not install your project or invoke package lifecycle scripts. Treat separate candidate builds and tests as untrusted code execution.</p></article>
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">Data boundary</p><h2 class="mt-4 text-xl font-semibold">No form backend on this site</h2><p class="mt-3 text-sm leading-7 text-zinc-400">Contact and audit forms prepare a mailto draft in your browser. The browser does not submit form values to a Neukee API.</p></article>
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">CI posture</p><h2 class="mt-4 text-xl font-semibold">Separate jobs by trust level</h2><p class="mt-3 text-sm leading-7 text-zinc-400">Keep static checks read-only. Isolate builds, avoid persistent credentials, use short-lived permissions, and protect the workflow and baseline configuration.</p></article>
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">Evidence</p><h2 class="mt-4 text-xl font-semibold">Reviewable results</h2><p class="mt-3 text-sm leading-7 text-zinc-400">Keep scanner versions, target versions, repository revisions, and policy configuration with reports. Redact secrets and minimize artifact retention.</p></article>
+      <article class="glass-surface rounded-xl p-6" data-reveal><p class="eyebrow">Limits</p><h2 class="mt-4 text-xl font-semibold">Not a compliance certificate</h2><p class="mt-3 text-sm leading-7 text-zinc-400">A scan or attestation can support internal evidence collection. Neither proves a system is secure, compliant, or free of regressions.</p></article>
+    </div>
+    <div class="mt-12 grid gap-5 rounded-xl border border-white/10 bg-white/[.025] p-6 sm:grid-cols-3 sm:p-8" data-reveal>
+      <div><p class="font-mono text-[10px] uppercase tracking-[.16em] text-zinc-500">Security architecture</p><a class="mt-2 inline-block text-sm text-violet-300 hover:text-violet-200" href="/security/">Read the technical detail →</a></div>
+      <div><p class="font-mono text-[10px] uppercase tracking-[.16em] text-zinc-500">Data and retention</p><a class="mt-2 inline-block text-sm text-violet-300 hover:text-violet-200" href="/privacy/">Read the privacy notice →</a></div>
+      <div><p class="font-mono text-[10px] uppercase tracking-[.16em] text-zinc-500">Report a vulnerability</p><a class="mt-2 inline-block text-sm text-violet-300 hover:text-violet-200" href="mailto:venuuu.nyc@proton.me?subject=Security%20report">Email the maintainer →</a></div>
+    </div>
+    <p class="mt-6 text-xs leading-5 text-zinc-600">This page describes the intended product and website boundaries. Verify the source, dependencies, workflow permissions, and network behavior for the exact release and environment you deploy.</p>
+  </section>
+</BaseLayout>

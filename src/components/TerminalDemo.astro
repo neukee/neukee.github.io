@@ -1,0 +1,124 @@
+<section class="overflow-hidden rounded-2xl border border-zinc-700/80 bg-[#0c0c0e] shadow-[0_30px_100px_-45px_rgba(16,185,129,.3)]" aria-label="Interactive Neukee terminal output">
+  <div class="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 bg-zinc-900/70 px-4 py-3 sm:px-5">
+    <div class="flex items-center gap-2" aria-hidden="true">
+      <span class="h-2.5 w-2.5 rounded-full bg-red-400/80"></span><span class="h-2.5 w-2.5 rounded-full bg-amber-400/80"></span><span class="h-2.5 w-2.5 rounded-full bg-emerald-400/80"></span>
+      <span class="ml-2 font-mono text-[11px] text-zinc-500">neukee — readiness report</span>
+    </div>
+    <button class="rounded-md border border-zinc-700 px-3 py-1.5 font-mono text-[11px] text-zinc-300 transition hover:border-emerald-500/60 hover:text-emerald-200" type="button" data-copy-output>Copy Output</button>
+  </div>
+  <div class="flex gap-1 overflow-x-auto border-b border-zinc-800 px-3 pt-2" role="tablist" aria-label="Example scan reports">
+    <button class="whitespace-nowrap rounded-t-md border border-b-0 border-zinc-700 bg-[#0c0c0e] px-3 py-2 font-mono text-[11px] text-emerald-300" id="tab-scan" role="tab" aria-selected="true" aria-controls="panel-scan" data-tab="scan">CLI Scan (v0.1.0)</button>
+    <button class="whitespace-nowrap rounded-t-md border border-transparent px-3 py-2 font-mono text-[11px] text-zinc-500 hover:text-zinc-300" id="tab-diff" role="tab" aria-selected="false" aria-controls="panel-diff" data-tab="diff" tabindex="-1">CI Behavioral Diff (v0b)</button>
+    <button class="whitespace-nowrap rounded-t-md border border-transparent px-3 py-2 font-mono text-[11px] text-zinc-500 hover:text-zinc-300" id="tab-sarif" role="tab" aria-selected="false" aria-controls="panel-sarif" data-tab="sarif" tabindex="-1">GitHub Action (SARIF)</button>
+  </div>
+  <div class="p-4 sm:p-6">
+    <div id="panel-scan" class="min-h-[280px] font-mono text-[11px] leading-6 sm:text-xs" role="tabpanel" aria-labelledby="tab-scan" data-panel="scan">
+      <p class="text-zinc-500">$ <span class="text-zinc-200">neukee scan --target node24,next16</span></p>
+      <p class="mt-2 text-zinc-500">Repository scan · static analysis · no network access</p>
+      <div class="mt-5 space-y-4">
+        <div><p class="text-red-400">[ERROR] RUNTIME_DRIFT</p><p class="pl-4 text-zinc-400">.nvmrc targets Node 24, but Dockerfile uses <code class="text-zinc-200">FROM node:20-alpine</code>.</p><p class="pl-4 text-zinc-500">Align the image and runtime pin. <a class="text-emerald-300 underline underline-offset-2" href="https://nodejs.org/en/blog/announcements/v24-release-announce" target="_blank" rel="noreferrer">Node 24 release notes ↗</a></p></div>
+        <div><p class="text-red-400">[ERROR] NATIVE_ADDON_ABI</p><p class="pl-4 text-zinc-400">pnpm-lock.yaml resolves <code class="text-zinc-200">canvas@2.11.2</code>; verify supported prebuilds or rebuild for the selected Node ABI.</p><p class="pl-4 text-zinc-500">Inspect <a class="text-emerald-300 underline underline-offset-2" href="https://nodejs.org/api/n-api.html" target="_blank" rel="noreferrer">Node-API compatibility guidance ↗</a> before promotion.</p></div>
+        <div><p class="text-amber-400">[WARN] NEXT16_ASYNC_REQUEST_API</p><p class="pl-4 text-zinc-400">src/app/dashboard/page.tsx:14:22 calls <code class="text-zinc-200">cookies()</code> synchronously.</p><p class="pl-4 text-zinc-500">Review the <a class="text-emerald-300 underline underline-offset-2" href="https://nextjs.org/blog/next-15" target="_blank" rel="noreferrer">Next.js async API migration notes ↗</a>.</p></div>
+      </div>
+    </div>
+    <div id="panel-diff" class="hidden min-h-[280px] font-mono text-[11px] leading-6 sm:text-xs" role="tabpanel" aria-labelledby="tab-diff" data-panel="diff" hidden>
+      <p class="text-zinc-500">$ <span class="text-zinc-200">neukee verify --base main --candidate HEAD</span></p>
+      <p class="mt-2 text-zinc-400">PR #482 · chore(deps): bump next 15.2 → 16.0</p>
+      <p class="text-zinc-500">Cached main baseline <span class="text-zinc-300">9f8a21c</span> · CI 4m 12s · 42/45 routes exercised · 0 egress calls</p>
+      <div class="mt-5 space-y-4">
+        <div><p class="text-red-400">[ACTION REQUIRED] POST /api/checkout</p><p class="pl-4 text-zinc-400">Candidate inserted 0 database rows; baseline inserted 1.</p><p class="pl-4 text-zinc-500">Cookie header absent in candidate replay. Inspect locally: <code class="text-emerald-300">npx neukee replay --diff-id chk_09a1</code></p></div>
+        <div><p class="text-emerald-400">[HARMLESS DOCUMENTED] GET /api/products</p><p class="pl-4 text-zinc-400">Cache-Control default changed; response body and persisted state are equivalent.</p></div>
+      </div>
+    </div>
+    <div id="panel-sarif" class="hidden min-h-[280px] font-mono text-[11px] leading-6 sm:text-xs" role="tabpanel" aria-labelledby="tab-sarif" data-panel="sarif" hidden>
+      <p class="text-zinc-500">.github/workflows/neukee.yml</p>
+      <pre class="mt-3 overflow-x-auto text-zinc-300"><code>name: Neukee verification
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx neukee scan --target node26 --format sarif --output neukee.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: neukee.sarif</code></pre>
+    </div>
+  </div>
+</section>
+
+<script>
+  function initializeTerminal() {
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-panel]'));
+    const copyButton = document.querySelector<HTMLButtonElement>('[data-copy-output]');
+    if (!tabs.length || tabs[0]?.dataset.bound === 'true') return;
+    tabs.forEach((tab) => { tab.dataset.bound = 'true'; });
+    let feedbackTimer: number | undefined;
+
+    function activateTab(tab: HTMLButtonElement) {
+      const name = tab.dataset.tab;
+      tabs.forEach((item) => {
+        const active = item === tab;
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+        item.classList.toggle('border-zinc-700', active);
+        item.classList.toggle('border-transparent', !active);
+        item.classList.toggle('text-emerald-300', active);
+        item.classList.toggle('text-zinc-500', !active);
+        item.classList.toggle('bg-[#0c0c0e]', active);
+      });
+      panels.forEach((panel) => {
+        const active = panel.dataset.panel === name;
+        panel.hidden = !active;
+        panel.classList.toggle('hidden', !active);
+      });
+      if (copyButton) copyButton.textContent = name === 'sarif' ? 'Copy Workflow' : 'Copy Output';
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+          : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+        tabs[next]?.focus();
+        if (tabs[next]) activateTab(tabs[next]);
+      });
+    });
+
+    copyButton?.addEventListener('click', async () => {
+      const active = panels.find((panel) => !panel.hidden);
+      if (!active || !copyButton) return;
+      try {
+        await navigator.clipboard.writeText(active.innerText.trim());
+        copyButton.textContent = 'Copied!';
+        window.clearTimeout(feedbackTimer);
+        feedbackTimer = window.setTimeout(() => {
+          if (copyButton) copyButton.textContent = document.querySelector('[data-panel="sarif"]:not([hidden])') ? 'Copy Workflow' : 'Copy Output';
+        }, 1600);
+      } catch (error) {
+        copyButton.textContent = 'Copy unavailable';
+        window.clearTimeout(feedbackTimer);
+        feedbackTimer = window.setTimeout(() => {
+          if (copyButton) copyButton.textContent = 'Copy Output';
+        }, 2200);
+        console.error('Unable to copy the terminal report.', error);
+      }
+    });
+  }
+  initializeTerminal();
+  document.addEventListener('astro:page-load', initializeTerminal);
+</script>

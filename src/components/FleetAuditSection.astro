@@ -1,0 +1,133 @@
+<section id="fleet-audit" class="stack-slide border-y border-zinc-800 bg-[#0c0c0e]" data-stack-slide style="--stack-order: 5">
+  <div class="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+    <div class="mx-auto max-w-3xl text-center">
+      <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">Node.js 22 EOL · April 30, 2027</p>
+      <h2 class="mt-4 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Turn your fleet’s upgrade into a plan.</h2>
+      <p class="mt-4 leading-7 text-zinc-400">Get a clear view of runtime, framework, and dependency blockers while there’s still room to fix them safely.</p>
+    </div>
+    <div class="mt-12 grid gap-5 lg:grid-cols-2">
+      <div class="rounded-2xl border border-zinc-800 bg-surface p-7 sm:p-9">
+        <p class="font-mono text-xs uppercase tracking-[.16em] text-zinc-500">01 / Live working session</p>
+        <h3 class="mt-4 text-2xl font-semibold">Free 15-minute fleet readiness call</h3>
+        <p class="mt-3 leading-7 text-zinc-400">Bring a representative service or a list of the upgrade questions blocking your team. We’ll use the time to find the next useful action—not to deliver a generic sales presentation.</p>
+        <ul class="mt-6 space-y-3 text-sm text-zinc-300">
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Live scan of 1–2 repositories</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Node 24/26 and Next.js 16 blocker check</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> Practical CI-time and engineering-effort estimate</li>
+        </ul>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a class="rounded-md bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" href="https://cal.com" target="_blank" rel="noreferrer">Book a readiness call</a>
+          <a class="rounded-md border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-500" href="mailto:venuuu.nyc@proton.me?subject=Fleet%20Readiness%20Audit">Email instead</a>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-zinc-800 bg-surface p-7 sm:p-9">
+        <p class="font-mono text-xs uppercase tracking-[.16em] text-zinc-500">02 / Written deliverable</p>
+        <h3 class="mt-4 text-2xl font-semibold">Request a 48-hour fleet audit blueprint</h3>
+        <p class="mt-3 leading-7 text-zinc-400">Tell us the shape of your fleet and the migration on your roadmap. The static form creates an email draft to our team; it does not transmit data to a backend.</p>
+        <form class="mt-6 space-y-4" data-audit-form>
+          <label class="block text-sm text-zinc-300">Work email
+            <input class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-emerald-500" type="email" name="email" autocomplete="email" placeholder="you@company.com" required />
+          </label>
+          <label class="block text-sm text-zinc-300">Company / GitHub organization
+            <input class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-emerald-500" type="text" name="company" autocomplete="organization" placeholder="acme-engineering" required />
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm text-zinc-300">Repository count
+              <select class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-200 focus:border-emerald-500" name="repositories" required>
+                <option value="" selected disabled>Select range</option><option>1–10 repositories</option><option>11–50 repositories</option><option>51–200 repositories</option><option>200+ repositories</option>
+              </select>
+            </label>
+            <label class="block text-sm text-zinc-300">Primary target
+              <select class="mt-2 block w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-zinc-200 focus:border-emerald-500" name="target" required>
+                <option value="" selected disabled>Select target</option><option>Node.js 22 EOL → Node 24 / 26</option><option>Next.js 15 → 16</option><option>Both Node.js &amp; Next.js</option><option>Continuous AI/dependency PR verification</option>
+              </select>
+            </label>
+          </div>
+          <p class="min-h-5 text-xs text-zinc-500" data-form-message aria-live="polite">No network request is made. Your email app will open with a pre-filled request.</p>
+          <button class="w-full rounded-md bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 hover:bg-emerald-400" type="submit">Prepare my audit request</button>
+        </form>
+        <div class="mt-6 hidden rounded-lg border border-emerald-500/30 bg-emerald-500/[.07] p-5" data-confirmation aria-live="polite">
+          <h4 class="font-semibold text-emerald-200">Your request is ready</h4>
+          <p class="mt-2 text-sm leading-6 text-zinc-400">We prepared a pre-call checklist and opened a message to venuuu.nyc@proton.me. Send the draft in your email app to deliver it.</p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <button type="button" class="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-200 hover:border-emerald-500" data-copy-checklist>Copy checklist</button>
+            <button type="button" class="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-200 hover:border-emerald-500" data-download-checklist>Download checklist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-zinc-600">Do not include credentials, source code, customer data, or other sensitive information in this form. It only composes an email in your own email client.</p>
+  </div>
+</section>
+
+<script>
+  const checklist = [
+    'Neukee fleet readiness call checklist',
+    '',
+    '1. Bring the repositories and runtime versions in scope.',
+    '2. Identify deployment targets (containers, functions, or managed platforms).',
+    '3. Note native dependencies and services that are difficult to reproduce.',
+    '4. Bring CI duration and the release window, if known.',
+    '5. Never share credentials, customer data, or production secrets.',
+  ].join('\n');
+
+  function initializeFleetAudit() {
+    const form = document.querySelector<HTMLFormElement>('[data-audit-form]');
+    const confirmation = document.querySelector<HTMLElement>('[data-confirmation]');
+    const formMessage = document.querySelector<HTMLElement>('[data-form-message]');
+    if (!form || form.dataset.bound === 'true') return;
+    form.dataset.bound = 'true';
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const email = String(data.get('email') ?? '').trim();
+      const company = String(data.get('company') ?? '').trim();
+      const repositories = String(data.get('repositories') ?? '');
+      const target = String(data.get('target') ?? '');
+      if (!email || !company || !repositories || !target) {
+        if (formMessage) formMessage.textContent = 'Please complete every field before preparing the request.';
+        return;
+      }
+      if (confirmation) confirmation.classList.remove('hidden');
+      if (formMessage) formMessage.textContent = 'Your email draft is open. Review it and press Send to deliver your request.';
+      const subject = `Fleet audit blueprint request — ${company}`;
+      const body = [
+        'Hello Neukee,',
+        '',
+        'Please prepare a fleet audit blueprint.',
+        `Work email: ${email}`,
+        `Company / GitHub organization: ${company}`,
+        `Repository count: ${repositories}`,
+        `Primary target: ${target}`,
+        '',
+        'I understand this request is delivered only when I send this email.',
+      ].join('\n');
+      window.location.href = `mailto:venuuu.nyc@proton.me?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+
+    document.querySelector<HTMLButtonElement>('[data-copy-checklist]')?.addEventListener('click', async (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      try {
+        await navigator.clipboard.writeText(checklist);
+        button.textContent = 'Copied!';
+        window.setTimeout(() => { button.textContent = 'Copy checklist'; }, 1600);
+      } catch (error) {
+        if (formMessage) formMessage.textContent = 'Clipboard access was unavailable. Use the download button instead.';
+        console.error('Unable to copy the audit checklist.', error);
+      }
+    });
+
+    document.querySelector<HTMLButtonElement>('[data-download-checklist]')?.addEventListener('click', () => {
+      const blob = new Blob([checklist], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'neukee-fleet-audit-checklist.txt';
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
+  initializeFleetAudit();
+  document.addEventListener('astro:page-load', initializeFleetAudit);
+</script>

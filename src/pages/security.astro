@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'A technical overview of Neukee’s security model: zero-egress scanning, static parsing, hostile-input protections, and CI controls for repository upgrades.';
+---
+
+<BaseLayout title="Security Architecture | Neukee" {description} canonicalPath="/security/">
+  <section class="border-b border-zinc-800 bg-[#0c0c0e]">
+    <div class="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+      <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">For security, platform, and engineering teams</p>
+      <h1 class="mt-5 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl">A scanner should not become the next supply-chain risk.</h1>
+      <p class="mt-6 max-w-3xl text-lg leading-8 text-zinc-400">Neukee is designed to inspect untrusted repository metadata without installing dependencies or executing application code. This page documents the intended architecture and the controls teams should independently validate in their deployment.</p>
+      <p class="mt-5 max-w-3xl rounded-lg border border-amber-500/20 bg-amber-500/[.05] p-4 text-sm leading-6 text-amber-100/80">Security guarantees apply to the scanner behavior and configuration actually deployed. Pin versions, review the source, and verify your own CI boundary; do not treat a marketing page as a substitute for an audit.</p>
+    </div>
+  </section>
+  <div class="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-20">
+    <div class="grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <nav class="h-fit rounded-xl border border-zinc-800 bg-surface p-5 text-sm text-zinc-400 lg:sticky lg:top-28" aria-label="Security page contents">
+        <p class="font-mono text-[11px] uppercase tracking-[.16em] text-zinc-500">Contents</p>
+        <div class="mt-4 space-y-3"><a class="block hover:text-emerald-300" href="#egress">Zero egress</a><a class="block hover:text-emerald-300" href="#parsing">Static parsing</a><a class="block hover:text-emerald-300" href="#inputs">Hostile inputs</a><a class="block hover:text-emerald-300" href="#ci">CI boundary</a><a class="block hover:text-emerald-300" href="#compliance">Evidence &amp; compliance</a></div>
+      </nav>
+      <article class="prose-technical min-w-0">
+        <section id="egress">
+          <p class="font-mono text-xs uppercase tracking-[.16em] text-emerald-300">01 / Network boundary</p>
+          <h2>Zero-egress scanning</h2>
+          <p>Static repository analysis should not need to contact a package registry or send source fragments to an external service. The intended scan path uses files already present in the checkout, and a zero-egress guarantee is meaningful only when it is continuously tested and enforced by the runner.</p>
+          <p>For a hardened pipeline, place the scanner in a job or container with outbound traffic denied by the platform firewall. Keep the runner’s required control-plane traffic separate from the analyzer process, and avoid broad network exceptions. Add automated network-blocking tests that fail if scanner code attempts DNS resolution, opens a socket, or calls an HTTP client. A test that merely mocks fetch is insufficient because it cannot detect every network API.</p>
+          <pre is:raw><code># Example runner policy; adapt to your own CI platform.
+# The scanner job should not inherit registry credentials.
+permissions:
+  contents: read
+  security-events: write
+
+steps:
+  - uses: actions/checkout@v4
+    with:
+      persist-credentials: false
+  - run: npx --offline neukee scan --target node24</code></pre>
+          <p>The example is a policy sketch, not a universal firewall. GitHub-hosted job networking can vary by runner and action; enforce the actual egress boundary with your organization’s available network controls and validate it from inside the job.</p>
+        </section>
+        <section id="parsing">
+          <p class="font-mono text-xs uppercase tracking-[.16em] text-emerald-300">02 / Execution model</p>
+          <h2>Parse metadata; do not execute the project</h2>
+          <p>Neukee’s static-analysis path is intended to parse source syntax with a JavaScript/TypeScript parser such as <a href="https://github.com/oxc-project/oxc">oxc-parser</a> and read supported package lockfiles as data. It does not need to evaluate the application, run its tests, execute install hooks, or load a package’s JavaScript module in order to identify many compatibility risks.</p>
+          <p>This separation matters because pull requests can modify <code>package.json</code> scripts, native build hooks, test configuration, or the analyzer’s input files. Running <code>npm install</code> can invoke lifecycle scripts; running a project test suite can execute arbitrary code. If a separate CI job must build or test the candidate, treat it as an explicit untrusted-code execution boundary with isolated credentials, short-lived tokens, and a disposable runner.</p>
+          <p>Static analysis also has limits. It can identify syntax patterns and declared dependency constraints, but it cannot prove that a path is executed or that every dynamic behavior is safe. Report precise evidence and confidence, link the relevant release guidance, and let maintainers determine remediation rather than disguising heuristics as proof.</p>
+        </section>
+        <section id="inputs">
+          <p class="font-mono text-xs uppercase tracking-[.16em] text-emerald-300">03 / Parser hardening</p>
+          <h2>Assume every repository input is hostile</h2>
+          <p>Repository content is data supplied by a contributor, a dependency update, or an automation agent. Robust scanners bound both the amount of data they accept and the work they perform on that data. Enforce file-size caps before decoding, reject or safely skip symlinks according to a documented policy, and avoid regular expressions with unbounded backtracking over attacker-controlled strings.</p>
+          <p>Traversal should honor ignore behavior deliberately. If <code>.gitignore</code> parity is supported, test nested patterns, negation, escaped characters, and paths outside the checkout. Never follow a symlink out of the repository root. Keep the scanner’s file allowlist explicit; “read everything recursively” is both a privacy risk and a source of avoidable resource exhaustion.</p>
+          <pre is:raw><code>// Defensive traversal outline
+for (const entry of entries) {
+  if (entry.isSymbolicLink()) continue;
+  if (!isInsideRepositoryRoot(entry.path)) continue;
+  if (entry.size > MAX_ANALYZED_FILE_BYTES) continue;
+  if (!matchesSupportedInput(entry.path)) continue;
+  await parseBoundedFile(entry.path);
+}</code></pre>
+          <p>Limits should be observable: report when a file is skipped or exceeds a cap rather than silently presenting an incomplete analysis as a clean scan. Track parse failures separately from compatibility findings so teams can distinguish “no issue found” from “input could not be assessed.”</p>
+        </section>
+        <section id="ci">
+          <p class="font-mono text-xs uppercase tracking-[.16em] text-emerald-300">04 / Pull request trust</p>
+          <h2>Make the CI boundary explicit and non-bypassable</h2>
+          <p>Use least-privilege workflow permissions and do not expose write-scoped repository tokens to untrusted pull-request code. Separate read-only static scanning from jobs that execute tests. When workflows consume an untrusted artifact, validate its type and size before parsing, and avoid evaluating its contents as shell code.</p>
+          <p>A policy check is only durable if a contributor cannot remove or weaken the check in the same pull request and still obtain a green required status. Protect workflow files and scanner configuration with <code>CODEOWNERS</code>, require review for changes to those paths, and configure branch protection to require the relevant status check from the expected workflow. Review the exact behavior of forked PRs and merge queues in your CI provider.</p>
+          <p>Where a CI proxy is used to deny or audit network access, configure it at the runner boundary and protect proxy configuration. <code>NODE_EXTRA_CA_CERTS</code> changes Node’s trusted certificate set; it is not itself a zero-egress control. A TLS-intercepting proxy can increase trust and privacy risks, so use it only with an explicit threat model, protected CA material, and narrowly scoped access.</p>
+        </section>
+        <section id="compliance">
+          <p class="font-mono text-xs uppercase tracking-[.16em] text-emerald-300">05 / Auditability</p>
+          <h2>Evidence is useful; attestations need verification</h2>
+          <p>SARIF provides a standard format for surfacing scanner findings in code review and security tooling. Preserve the scanner version, target versions, repository revision, and policy configuration alongside results. Avoid putting secrets or unnecessary source excerpts in artifacts, and set retention to match your organization’s data-handling rules.</p>
+          <p>Signed in-toto attestations can bind build provenance to a workflow identity and artifact digest. They do not automatically establish that the analyzer is correct or that a result is compliant. Verify signatures against an expected identity and issuer, protect the workflow that produces the attestation, and retain the verification policy. These controls can support evidence collection for frameworks such as SOC 2 CC8.1 and PCI DSS 6.3.3; they are not certification or compliance by themselves.</p>
+          <p>For a security review, ask for a pinned scanner version, a reproducible build provenance statement, an SBOM, documented parser limits, test results for blocked network calls, and a clear process for reporting vulnerabilities. Confirm those artifacts against the code and workflow you actually run.</p>
+        </section>
+      </article>
+    </div>
+  </div>
+</BaseLayout>

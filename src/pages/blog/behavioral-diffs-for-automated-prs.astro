@@ -1,0 +1,32 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+
+const title = 'Automated Pull Requests Need Behavioral Evidence';
+const description = 'A review workflow for dependency and AI-generated pull requests that combines unit tests with repeatable, isolated baseline-versus-candidate comparisons.';
+const path = '/blog/behavioral-diffs-for-automated-prs/';
+---
+
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23">
+  <Fragment slot="toc">
+    <a class="block hover:text-violet-200" href="#why-green-isnt-enough">Why green is not enough</a>
+    <a class="block hover:text-violet-200" href="#baseline">Pin the baseline</a>
+    <a class="block hover:text-violet-200" href="#compare">Compare meaningful behavior</a>
+    <a class="block hover:text-violet-200" href="#isolation">Keep the test safe</a>
+  </Fragment>
+  <p>Automated pull requests are valuable because they arrive continuously and keep small upgrades moving. They are also easy to review too quickly: dependency bots show a version diff, AI coding agents add a convincing explanation, and the CI badge turns green. None of those facts alone establishes that the new dependency or code preserves the behavior users rely on.</p>
+  <p>This does not make automated authors less trustworthy than humans. It means a repository needs the same review evidence for every change, regardless of who or what proposed it. The practical addition is a focused comparison between a trusted base revision and the candidate, executed with the same inputs in an isolated environment.</p>
+  <h2 id="why-green-isnt-enough">Why a green unit suite can miss the edge</h2>
+  <p>A mocked HTTP client can verify how your function handles a response that the test created. It cannot prove the real client sent a cookie, selected the same protocol option, or normalized a value the same way after a library update. A mocked database adapter can test a branch, but miss a transaction default or constraint behavior in the actual database version.</p>
+  <p>Mocks are not a mistake; they are a boundary choice. Use them for isolated logic and error handling. Add a few integration scenarios where the boundary itself is part of the behavior contract: authentication headers, response caching, serialization, a write that should persist one row, or a retry that must not duplicate a side effect.</p>
+  <h2 id="baseline">Pin the baseline so comparisons mean something</h2>
+  <p>Capture the target branch SHA and its lockfile when the workflow starts. Do not compare the candidate against a moving “latest main” if main can advance during the run. Record runtime, operating system, package-manager version, fixture seed, and harness version with the result. Clean or recreate stateful test services before each run.</p>
+  <p>Protect comparison scenarios and normalization policy from the candidate being measured. A pull request should not be able to delete a failing test, alter the baseline, and then produce a green comparison in the same change without a required reviewer seeing that policy edit. Use code-owner review and branch protection on the workflow and harness paths.</p>
+  <h2 id="compare">Compare the behavior that changes the decision</h2>
+  <p>For HTTP routes, capture method, normalized path, status, selected headers, and body. Preserve fields with security meaning: <code>Set-Cookie</code>, <code>Cache-Control</code>, <code>Location</code>, and content type are not harmless metadata. Normalize only values that are inherently volatile and irrelevant to the contract, such as a known test-generated request ID.</p>
+  <p>For database behavior, use a disposable database seeded from synthetic fixtures. Compare the tables and rows changed by a scenario, not an unrestricted dump of the database. For outbound traffic, record a minimal allowlisted set of destinations and method/header names. Do not store authorization values or production request bodies in artifacts.</p>
+  <p>A difference should explain itself: baseline and candidate SHAs, scenario name, input fixture, observed change, and replay command. An unchanged body with a different cache header may need review; a checkout route that inserts no row where the baseline inserted one likely blocks release. The report helps a reviewer decide; it should not silently declare every difference acceptable or unsafe.</p>
+  <h2 id="isolation">Make safety part of the harness</h2>
+  <p>Pull requests can modify install scripts, test code, or workflow configuration. Give untrusted jobs read-only permissions, avoid persistent checkout credentials, use short-lived tokens, and run in disposable workers. Keep static scans in a no-egress job where practical and run integration tests against local ephemeral services. Never inject deployment credentials or production data merely to make the comparison more realistic.</p>
+  <p>Noise control should be explicit. Fixed clocks, seeded randomness, stable fixtures, and repeated execution can reveal flaky comparisons. A second run can help identify noise, but should not erase a difference automatically. Keep suppressions narrow, reviewed, and visible in the report.</p>
+  <p>Start in advisory mode with a small number of stable scenarios. Learn which differences are meaningful, track false positives and CI duration, and require the status only when the harness can distinguish a real failure from an unavailable environment. That creates a higher review bar without pretending automation has replaced engineering judgment.</p>
+</GuideLayout>

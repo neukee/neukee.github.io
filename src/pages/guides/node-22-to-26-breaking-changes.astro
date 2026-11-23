@@ -1,0 +1,100 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+
+const title = 'Node.js 22 to 26: Breaking Changes, OpenSSL, and Native Addons';
+const description = 'A compatibility-first guide to a Node.js 22-to-26 migration: OpenSSL and RSA key policy, native module ABI rebuilds, require(esm), and removed deprecated APIs.';
+const path = '/guides/node-22-to-26-breaking-changes/';
+---
+
+<GuideLayout {title} {description} canonicalPath={path}>
+  <Fragment slot="toc">
+    <a class="block hover:text-emerald-300" href="#migration-shape">Migration shape</a>
+    <a class="block hover:text-emerald-300" href="#openssl">OpenSSL &amp; RSA</a>
+    <a class="block hover:text-emerald-300" href="#native">Native addons &amp; ABI</a>
+    <a class="block hover:text-emerald-300" href="#require-esm">require(esm)</a>
+    <a class="block hover:text-emerald-300" href="#removed-apis">Deprecated APIs</a>
+    <a class="block hover:text-emerald-300" href="#test-plan">Test plan</a>
+  </Fragment>
+
+  <p>Moving from Node.js 22 to Node.js 26 crosses several release lines. Treat it as a migration across four majors, not a single “Node upgrade” checkbox. Runtime behavior, embedded OpenSSL and V8 versions, native module compatibility, and the package graph can all change between the two tested environments. Read the official release notes for each intermediate major and validate the final patch version you intend to deploy; a summary of notable risks is not an exhaustive compatibility contract.</p>
+  <p>This guide focuses on changes that commonly escape a simple unit-test run. It does not imply every application will hit every issue. The safe approach is to identify where your code and dependencies touch these boundaries, then turn each relevant concern into a reproducible test or explicit exception.</p>
+
+  <h2 id="migration-shape">Model the migration as a sequence</h2>
+  <p>Before editing a version pin, build an inventory of Node selection points and native packages. Capture the current Node 22 production image, lockfile, architecture, and representative smoke-test results. If a failure appears only after moving directly to 26, test intermediate majors to determine whether the break originated in one release boundary or in the final environment. This makes upstream issue reports and rollback decisions much more precise.</p>
+  <p>For each candidate, record exact runtime and package-manager versions in CI. “Node 26” is a moving major tag, not a reproducible test case. Pin the version or container digest according to your patch-update policy, then deliberately refresh it. Keep the operating system and libc constant where possible; changing Alpine to Debian at the same time can obscure native binary and TLS differences.</p>
+  <pre is:raw><code># Before: reproducible only by convention
+FROM node:22
+RUN npm ci
+
+# After: align the tested line and target platform
+FROM node:26-bookworm
+RUN npm ci
+RUN node --version &amp;&amp; npm --version</code></pre>
+  <p>The after snippet illustrates a coordinated move, not a universal recommendation for Debian or floating image tags. Use a digest if your supply-chain process requires immutable builds, and make sure development, CI, and production all exercise the same intended runtime family.</p>
+
+  <h2 id="openssl">OpenSSL 3.5, RSA keys, and TLS policy</h2>
+  <p>Node embeds OpenSSL, so a runtime upgrade can change cryptographic implementation details and the library version independently of your application code. Node 26 is associated with the OpenSSL 3.5 generation; verify the exact version in the Node release notes and in the binary you deploy by inspecting <code>process.versions.openssl</code>. OpenSSL security levels and provider configuration affect which keys, signatures, ciphers, and protocols are accepted. RSA keys below 2048 bits are a particular compatibility concern: policies commonly reject these keys at modern security levels, and weak keys should not be “fixed” by relaxing production TLS requirements.</p>
+  <p>Inventory private CA bundles, client certificates, certificate pinning, self-signed development endpoints, JWT signing keys, and integrations that still use legacy RSA material. A failure can occur during certificate-chain verification or when code attempts to load a key—not just during an outbound HTTPS request. Test the actual connection path in a staging environment that uses the target runtime, OpenSSL configuration, and trust store.</p>
+  <pre is:raw><code>// Log runtime crypto details without exposing key material
+console.info({
+  node: process.version,
+  openssl: process.versions.openssl,
+});
+
+// A migration test should validate expected endpoints and CA policy.
+const response = await fetch(process.env.STAGING_TLS_HEALTH_URL);
+if (!response.ok) throw new Error(`TLS health check failed: ${response.status}`);</code></pre>
+  <p>Do not log certificate private keys, authorization headers, or sensitive endpoint query strings to “debug” a handshake. Instead, use sanitized diagnostics, inspect certificates through your normal secret-management workflow, and record the precise OpenSSL error. If a partner still depends on weak cryptography, treat the finding as an explicit risk and coordinate remediation; do not lower the security level globally to make a test pass.</p>
+
+  <h2 id="native">Native addons: ABI is not the same as Node-API</h2>
+  <p>Traditional native addons compiled against V8 or Node’s C++ interfaces are tied to the runtime ABI. <code>process.versions.modules</code> exposes the <code>NODE_MODULE_VERSION</code> value; a binary compiled for one value generally cannot be loaded by another. Node-API (formerly N-API) offers a versioned ABI stability contract for addons that use only its supported API, but the existence of an N-API prebuild does not guarantee that the package publishes a binary for your operating system, architecture, libc, and target Node-API version.</p>
+  <p>Start from the resolved lockfile, including transitive dependencies. Search install logs and package metadata for packages that compile C/C++ or download prebuilt binaries. Confirm current upstream support and package maintenance status. Rebuild native dependencies inside the final build environment; never copy a <code>node_modules</code> tree from a developer’s macOS machine into a Linux production image. Test optional dependency behavior as well: some packages install successfully but quietly fall back to a slower or less capable implementation.</p>
+  <pre is:raw><code>// Diagnostic facts safe to include in a CI report
+console.info({
+  node: process.version,
+  modulesAbi: process.versions.modules,
+  napi: process.versions.napi,
+  platform: process.platform,
+  architecture: process.arch,
+});</code></pre>
+  <p>When a native addon fails, capture the complete build context and error rather than repeatedly clearing the lockfile. Check the package’s compatibility matrix, compiler toolchain, Python requirements, system libraries, and whether the package has an N-API-based release. A transitive package pinned several levels below the top-level dependency may require an explicit upstream update or replacement.</p>
+
+  <h2 id="require-esm">CommonJS require(esm) is not a universal interoperability switch</h2>
+  <p>Recent Node releases have expanded support for loading certain synchronous ES modules through <code>require()</code>. This can ease some migrations, but the behavior depends on module format detection, the module graph, and whether top-level await is used. A CommonJS package cannot simply assume that every ESM dependency will now load. Conditional exports may select different entry points for <code>import</code> and <code>require</code>, and changing the selected entry can expose differences in initialization or singleton state.</p>
+  <p>Test the package entry points your production code actually uses. Include a dependency with an ESM-only export if your graph contains one, exercise the CommonJS call site, and include a module with top-level await to verify the intended failure behavior. Check for experimental or warning changes in the exact Node releases you support. If an API is meant to be asynchronous, prefer an explicit dynamic import and propagate the promise rather than relying on a synchronous bridge.</p>
+  <pre is:raw><code>// Before: implicit CommonJS loading can fail for ESM-only packages
+const library = require('esm-only-library');
+
+// After: explicit asynchronous boundary
+async function loadLibrary() {
+  const library = await import('esm-only-library');
+  return library.default ?? library;
+}</code></pre>
+  <p>The second pattern changes the call contract: callers must await initialization. If that is not possible, select a dependency version with a supported CommonJS export or isolate the interop behind a deliberate adapter. Do not paper over a loader error by swallowing it and returning an empty module object.</p>
+
+  <h2 id="removed-apis">Deprecated APIs and behavior removals</h2>
+  <p>Deprecation does not always mean immediate removal, and an API’s status can change across majors. Read deprecation documentation and release notes for Node 23, 24, 25, and 26 rather than treating a generic migration list as definitive. Search code and transitive libraries for deprecated APIs that are relevant to your version path. Enable trace warnings in a controlled CI job, but avoid relying on warning output alone: a code path may be dormant in the tested scenarios.</p>
+  <p>Pay particular attention to APIs that touch parsing, streams, TLS, URL handling, module loading, and legacy protocol behavior. Replace a deprecated API with its documented supported equivalent, then test edge cases such as malformed input, stream cancellation, and error propagation. If the warning comes from a third-party library, update it or document a bounded exception with an owner and review date.</p>
+  <p>A useful before-and-after change is small and explicit. For example, replace legacy URL parsing in new code with the WHATWG URL interface and test invalid values instead of relying on permissive legacy behavior:</p>
+  <pre is:raw><code>// Before: legacy parsing may accept surprising input
+const parsed = require('node:url').parse(rawUrl);
+
+// After: require a well-formed absolute URL
+const parsedUrl = new URL(rawUrl);
+if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
+  throw new TypeError('Unsupported URL protocol');
+}</code></pre>
+  <p>This is an example of a safer parsing contract, not a claim that every use of the legacy API is removed in Node 26. Verify deprecation status for your chosen release and preserve the application’s intended URL semantics during conversion.</p>
+
+  <h2 id="test-plan">A migration test plan that catches real incompatibility</h2>
+  <ol>
+    <li>Pin and record the exact Node 22 baseline and target Node 26 build, plus OS, architecture, and package manager.</li>
+    <li>Install from the committed lockfile in a clean environment and capture every native build or prebuild selection.</li>
+    <li>Run static analysis for deprecated API use and module-format boundaries; inspect package export maps where CommonJS and ESM meet.</li>
+    <li>Exercise TLS to representative staging endpoints with the production trust policy and valid certificate material.</li>
+    <li>Run integration tests that cover database, queue, filesystem, HTTP, and startup/shutdown paths, not just mocked unit functions.</li>
+    <li>Compare relevant responses and persisted side effects between baseline and candidate; investigate differences instead of normalizing them away.</li>
+    <li>Canary with rollback criteria and keep the prior artifact available until operational signals meet the agreed threshold.</li>
+  </ol>
+  <p>The final release decision should state both what passed and what remains uncertain. A clean static scan cannot prove a binary prebuild will work on every deployment architecture; a successful compile cannot prove TLS policy is accepted by every partner; and a passing test suite cannot establish behavior for an unexercised route. Neukee can help flag runtime drift, locked native dependencies, and risky code patterns before the upgrade PR lands. Use that result as a map for targeted tests, then let reproducible build and production-like evidence decide whether Node 26 is ready for your service.</p>
+</GuideLayout>

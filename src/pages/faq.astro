@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'Straight answers about Neukee’s repository scans, CI verification, privacy boundaries, supported upgrade work, and ways to get help.';
+const questions = [
+  {
+    question: 'What does Neukee check before an upgrade?',
+    answer: 'The scanner is designed to compare runtime declarations, deployment configuration, dependency lockfiles, and source patterns against a chosen Node.js or framework target. Its report should make findings reviewable, cite relevant upstream guidance, and call out what it could not assess.',
+  },
+  {
+    question: 'Does a scan upload my source code?',
+    answer: 'The intended local scan path analyzes repository files on the machine or CI runner and makes no network calls. Keep the runner’s network policy explicit and verify the behavior of the exact version you install. This website itself is hosted separately; see the Privacy page for site and email details.',
+  },
+  {
+    question: 'Does Neukee install dependencies or run lifecycle scripts?',
+    answer: 'Static readiness analysis does not need to run npm install, package lifecycle hooks, or application code. If your own CI runs a build or integration tests, isolate that untrusted-code job and restrict its credentials and network access.',
+  },
+  {
+    question: 'Which migration targets are covered?',
+    answer: 'The current content focuses on Node.js 22 to supported Node.js lines, the Node 22 to 26 compatibility boundary, and Next.js 15 to 16. Confirm the exact source and target versions in the tool’s release notes before making a production plan.',
+  },
+  {
+    question: 'Can Neukee prove an upgrade is safe?',
+    answer: 'No single static scan, test suite, or behavioral diff can prove that every production path is safe. Neukee is meant to surface concrete risks and evidence; teams still need environment-specific tests, staged rollout, monitoring, and an owned rollback plan.',
+  },
+  {
+    question: 'How does the behavioral comparison work?',
+    answer: 'A configured CI harness can compare selected candidate behavior with an immutable baseline: HTTP responses, selected outbound request metadata, and database row deltas. Use synthetic data, isolate the test services, and keep the compared scenarios and normalization rules visible to reviewers.',
+  },
+  {
+    question: 'Is the fleet audit really free?',
+    answer: 'The site offers a free 15-minute readiness conversation and a request path for a written audit blueprint. Availability and scope are confirmed directly; sending the form opens an email draft and does not transmit information until you choose to send it.',
+  },
+  {
+    question: 'What happens when I submit a form?',
+    answer: 'This is a static website. The form validates in your browser and opens a prefilled email draft addressed to venuuu.nyc@proton.me. No form backend stores the fields. Review the draft, remove anything sensitive, and send it yourself.',
+  },
+  {
+    question: 'Where should I report a security issue?',
+    answer: 'Email venuuu.nyc@proton.me with “Security report” in the subject. Please do not include credentials, customer records, or production secrets. We will acknowledge receipt as soon as reasonably possible; the site does not promise a specific response-time SLA.',
+  },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: questions.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+};
+---
+
+<BaseLayout title="FAQ | Neukee" {description} canonicalPath="/faq/" {jsonLd}>
+  <section class="relative overflow-hidden border-b border-white/10 bg-[#0c0912] px-5 py-20 sm:py-28" data-reveal>
+    <div class="absolute inset-0 dot-field opacity-30 [mask-image:linear-gradient(to_right,transparent,black,transparent)]" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-5xl">
+      <p class="eyebrow">Good questions deserve direct answers</p>
+      <h1 class="mt-5 max-w-4xl text-5xl font-semibold leading-[.98] tracking-[-.05em] sm:text-7xl">Before you trust a check, understand what it checks.</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">Product scope, privacy, CI boundaries, and the limits we think should be stated plainly.</p>
+    </div>
+  </section>
+  <section class="mx-auto max-w-5xl px-5 py-14 lg:px-8 lg:py-20">
+    <div class="space-y-3">
+      {questions.map(({ question, answer }, index) => (
+        <details class="glass-surface group rounded-xl p-5 sm:p-6" data-reveal>
+          <summary class="flex cursor-pointer list-none items-start justify-between gap-6 text-base font-semibold text-zinc-100 sm:text-lg">
+            <span><span class="mr-3 font-mono text-xs text-violet-300">0{index + 1}</span>{question}</span>
+            <span class="mt-1 shrink-0 text-xl text-violet-300 transition-transform group-open:rotate-45" aria-hidden="true">+</span>
+          </summary>
+          <p class="mt-4 max-w-3xl border-l border-violet-400/40 pl-4 text-sm leading-7 text-zinc-400">{answer}</p>
+        </details>
+      ))}
+    </div>
+    <div class="mt-12 flex flex-col gap-5 rounded-xl border border-violet-300/15 bg-violet-300/[.05] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8" data-reveal>
+      <div><p class="eyebrow">Still have a specific question?</p><h2 class="mt-3 text-2xl font-semibold">Talk through the actual repo and target.</h2></div>
+      <a class="inline-flex items-center justify-center gap-2 rounded-md bg-violet-400 px-5 py-3 text-sm font-semibold text-zinc-950 hover:bg-violet-300" href="mailto:venuuu.nyc@proton.me">Email Neukee ↗</a>
+    </div>
+  </section>
+</BaseLayout>

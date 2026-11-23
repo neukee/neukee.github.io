@@ -1,0 +1,157 @@
+<div class="living-backdrop" aria-hidden="true">
+  <canvas class="dependency-mesh" data-dependency-mesh></canvas>
+  <div class="aurora-ribbon aurora-ribbon-one"></div>
+  <div class="aurora-ribbon aurora-ribbon-two"></div>
+  <div class="living-type" data-living-type>
+    <span>NODE 26 <b>•</b> ZERO EGRESS <b>•</b> DETERMINISTIC <b>•</b> NEXT 16 <b>•</b> NODE 26 <b>•</b> ZERO EGRESS <b>•</b> DETERMINISTIC <b>•</b> NEXT 16</span>
+  </div>
+  <svg class="film-grain" xmlns="http://www.w3.org/2000/svg">
+    <filter id="neukee-grain">
+      <feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" stitchTiles="stitch" />
+      <feColorMatrix type="saturate" values="0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#neukee-grain)" opacity=".15" />
+  </svg>
+</div>
+
+<script>
+  type NodePoint = { x: number; y: number; vx: number; vy: number; phase: number };
+  let meshFrame = 0;
+  let meshCanvas: HTMLCanvasElement | null = null;
+  let meshContext: CanvasRenderingContext2D | null = null;
+  let meshPoints: NodePoint[] = [];
+  let viewportWidth = 0;
+  let viewportHeight = 0;
+  let deviceScale = 1;
+  const pointer = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function resizeMesh() {
+    if (!meshCanvas || !meshContext) return;
+    viewportWidth = window.innerWidth;
+    viewportHeight = window.innerHeight;
+    deviceScale = Math.min(window.devicePixelRatio || 1, 1.5);
+    meshCanvas.width = Math.round(viewportWidth * deviceScale);
+    meshCanvas.height = Math.round(viewportHeight * deviceScale);
+    meshCanvas.style.width = `${viewportWidth}px`;
+    meshCanvas.style.height = `${viewportHeight}px`;
+    meshContext.setTransform(deviceScale, 0, 0, deviceScale, 0, 0);
+    const count = Math.max(28, Math.min(58, Math.round(viewportWidth * viewportHeight / 22000)));
+    meshPoints = Array.from({ length: count }, () => ({
+      x: Math.random() * viewportWidth,
+      y: Math.random() * viewportHeight,
+      vx: (Math.random() - .5) * .16,
+      vy: (Math.random() - .5) * .16,
+      phase: Math.random() * Math.PI * 2,
+    }));
+    drawMesh(0, false);
+  }
+
+  function drawMesh(time: number, animate: boolean) {
+    if (!meshContext) return;
+    const context = meshContext;
+    context.clearRect(0, 0, viewportWidth, viewportHeight);
+    pointer.x += (pointer.targetX - pointer.x) * .045;
+    pointer.y += (pointer.targetY - pointer.y) * .045;
+
+    meshPoints.forEach((point) => {
+      if (animate) {
+        point.x += point.vx + (pointer.x - point.x) * .000018;
+        point.y += point.vy + (pointer.y - point.y) * .000018;
+        if (point.x < -12) point.x = viewportWidth + 12;
+        if (point.x > viewportWidth + 12) point.x = -12;
+        if (point.y < -12) point.y = viewportHeight + 12;
+        if (point.y > viewportHeight + 12) point.y = -12;
+        point.phase += .004;
+      }
+    });
+
+    const reach = Math.min(154, Math.max(108, viewportWidth * .115));
+    for (let index = 0; index < meshPoints.length; index += 1) {
+      const point = meshPoints[index];
+      if (!point) continue;
+      const glow = .18 + (Math.sin(point.phase + time * .0002) + 1) * .08;
+      context.fillStyle = `rgba(196,181,253,${glow})`;
+      context.beginPath();
+      context.arc(point.x, point.y, 1.05, 0, Math.PI * 2);
+      context.fill();
+      for (let nextIndex = index + 1; nextIndex < meshPoints.length; nextIndex += 1) {
+        const next = meshPoints[nextIndex];
+        if (!next) continue;
+        const dx = point.x - next.x;
+        const dy = point.y - next.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < reach) {
+          context.strokeStyle = `rgba(167,139,250,${(1 - distance / reach) * .13})`;
+          context.lineWidth = .65;
+          context.beginPath();
+          context.moveTo(point.x, point.y);
+          context.lineTo(next.x, next.y);
+          context.stroke();
+        }
+      }
+      const cursorDistance = Math.hypot(point.x - pointer.x, point.y - pointer.y);
+      if (cursorDistance < 170) {
+        context.strokeStyle = `rgba(52,211,153,${(1 - cursorDistance / 170) * .28})`;
+        context.lineWidth = .8;
+        context.beginPath();
+        context.moveTo(point.x, point.y);
+        context.lineTo(pointer.x, pointer.y);
+        context.stroke();
+      }
+    }
+
+    if (animate && !prefersReducedMotion.matches && document.visibilityState === 'visible') {
+      meshFrame = window.requestAnimationFrame((nextTime) => drawMesh(nextTime, true));
+    }
+  }
+
+  function startMesh() {
+    meshCanvas = document.querySelector<HTMLCanvasElement>('[data-dependency-mesh]');
+    meshContext = meshCanvas?.getContext('2d', { alpha: true }) ?? null;
+    if (!meshCanvas || !meshContext) return;
+    window.cancelAnimationFrame(meshFrame);
+    resizeMesh();
+    if (!prefersReducedMotion.matches) meshFrame = window.requestAnimationFrame((time) => drawMesh(time, true));
+  }
+
+  window.addEventListener('resize', resizeMesh, { passive: true });
+  window.addEventListener('pointermove', (event) => {
+    pointer.targetX = event.clientX;
+    pointer.targetY = event.clientY;
+    const typeLayer = document.querySelector<HTMLElement>('[data-living-type]');
+    typeLayer?.style.setProperty('--cursor-drift', `${(event.clientX / Math.max(window.innerWidth, 1) - .5) * 22}px`);
+    const card = (event.target as Element | null)?.closest<HTMLElement>('.spotlight-card');
+    if (card) {
+      const bounds = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', `${event.clientX - bounds.left}px`);
+      card.style.setProperty('--mouse-y', `${event.clientY - bounds.top}px`);
+    }
+  }, { passive: true });
+  window.addEventListener('pointerout', (event) => {
+    if (event.relatedTarget) return;
+    pointer.targetX = -1000;
+    pointer.targetY = -1000;
+  }, { passive: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') window.cancelAnimationFrame(meshFrame);
+    else startMesh();
+  });
+  prefersReducedMotion.addEventListener('change', startMesh);
+  startMesh();
+  document.addEventListener('astro:page-load', startMesh);
+</script>
+
+<style>
+  .living-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #08070b; }
+  .dependency-mesh { position: absolute; inset: 0; opacity: .8; }
+  .aurora-ribbon { position: absolute; width: 65vw; height: 55vh; border-radius: 50%; filter: blur(110px) saturate(160%); opacity: .16; mix-blend-mode: screen; animation: aurora-drift 23s ease-in-out infinite alternate; }
+  .aurora-ribbon-one { top: -24vh; left: -12vw; background: radial-gradient(ellipse, rgba(16,185,129,.52), rgba(16,185,129,0) 68%); }
+  .aurora-ribbon-two { right: -24vw; bottom: -34vh; background: radial-gradient(ellipse, rgba(124,58,237,.7), rgba(56,189,248,0) 70%); animation-duration: 29s; animation-direction: alternate-reverse; }
+  .living-type { position: absolute; top: 39%; left: -10vw; width: max-content; color: rgba(233,227,255,.035); font-family: "Space Grotesk", sans-serif; font-size: clamp(5rem, 17vw, 18rem); font-weight: 700; letter-spacing: -.085em; line-height: .8; white-space: nowrap; transform: translate3d(calc(var(--cursor-drift, 0px) + var(--scroll-shift, 0px)), 0, 0); transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+  .living-type b { color: rgba(167,139,250,.16); font-size: .58em; vertical-align: 16%; }
+  .film-grain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; mix-blend-mode: soft-light; }
+  @keyframes aurora-drift { from { transform: translate3d(-4vw,-2vh,0) rotate(-8deg) scale(1); } to { transform: translate3d(8vw,5vh,0) rotate(9deg) scale(1.13); } }
+  @media (max-width: 700px) { .aurora-ribbon { width: 110vw; height: 40vh; filter: blur(80px); opacity: .12; } .living-type { top: 43%; font-size: 30vw; } }
+  @media (prefers-reduced-motion: reduce) { .aurora-ribbon, .living-type { animation: none; transition: none; } }
+</style>

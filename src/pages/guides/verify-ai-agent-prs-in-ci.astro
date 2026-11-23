@@ -1,0 +1,65 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+
+const title = 'How to Verify AI-Agent Pull Requests in CI';
+const description = 'A practical method for checking dependency-bot and AI coding agent changes with repeatable baseline-versus-candidate behavior tests, not only mocked unit tests.';
+const path = '/guides/verify-ai-agent-prs-in-ci/';
+---
+
+<GuideLayout {title} {description} canonicalPath={path}>
+  <Fragment slot="toc">
+    <a class="block hover:text-emerald-300" href="#mock-gap">The mock gap</a>
+    <a class="block hover:text-emerald-300" href="#baseline">Build a trustworthy baseline</a>
+    <a class="block hover:text-emerald-300" href="#diff">Compare behavior</a>
+    <a class="block hover:text-emerald-300" href="#noise">Control noise</a>
+    <a class="block hover:text-emerald-300" href="#security">Run safely</a>
+    <a class="block hover:text-emerald-300" href="#adoption">Adopt the signal</a>
+  </Fragment>
+
+  <p>Renovate, Dependabot, and AI coding agents can produce a large volume of plausible pull requests. The difficulty is not determining whether a diff compiles; it is establishing whether the candidate still behaves correctly at the boundaries that matter to your service. A pull request can pass every unit test and still drop an authorization cookie, change a cache header, stop persisting a database row, or subtly alter a response after a transitive dependency update.</p>
+  <p>These failures are not unique to AI-authored changes. Automated dependency updates have always moved code across API and behavior boundaries. Agent-generated changes add a second challenge: the patch and its explanation can look confident even when the tests do not exercise the relevant integration. The answer is not to distrust every bot or to replace review with an opaque score. It is to add repeatable, reviewable evidence beside the tests you already trust.</p>
+
+  <h2 id="mock-gap">Why mocked tests miss integration regressions</h2>
+  <p>A unit test with a mocked <code>fetch</code> call proves how a function responds to the mock it was given. It does not prove that the real HTTP client sends the cookie header, that the framework serializes a response the same way, or that a route actually invokes the expected persistence layer. Mocks are valuable for isolated logic and failure cases, but they can reproduce the test author’s assumptions rather than the production boundary.</p>
+  <p>The same limitation appears in database tests. A stubbed repository can validate that a function asks to insert a row, yet miss a transaction rollback, a changed default, an ORM serialization difference, or a constraint violation against the actual schema. A package upgrade can make an API signature remain source-compatible while altering retries, normalization, connection reuse, or edge-case parsing.</p>
+  <p>As a result, “all tests green” is meaningful only in context: which code ran, which real boundaries were exercised, and which outputs were compared? A useful additional check executes selected scenarios on both the trusted base revision and the candidate under controlled, isolated conditions. It then reports the differences for a person to interpret.</p>
+
+  <h2 id="baseline">Build a trustworthy baseline</h2>
+  <p>Use an immutable base commit as the reference. For a pull request, that is usually the merge base or the target branch revision captured when the job starts. Record the SHA, lockfile hash, runtime, operating system, and test harness version. If the baseline silently tracks a later moving branch while the candidate is running, the comparison is no longer reproducible.</p>
+  <p>Keep the harness outside the code being evaluated when possible. A pull request should not be able to edit its own comparison policy and then declare itself equivalent. Protect baseline configuration with code-owner review, pin action versions according to your supply-chain policy, and make changes to fixtures and suppression rules visible as security-relevant changes.</p>
+  <p>Select a bounded set of representative scenarios rather than trying to capture every request made by a large production system. Include high-value endpoints, authenticated and anonymous behavior, error paths, one state-changing operation in an isolated database, and a route whose caching or headers matter. Use synthetic data with no customer records, real credentials, payment tokens, or production secrets.</p>
+  <pre is:raw><code># Illustrative CI sequence; the harness is project-specific.
+steps:
+  - name: Capture base revision
+    run: ./ci/behavioral-checkout.sh "$BASE_SHA" /tmp/base
+  - name: Capture candidate revision
+    run: ./ci/behavioral-checkout.sh "$HEAD_SHA" /tmp/candidate
+  - name: Compare selected scenarios
+    run: ./ci/behavioral-diff.sh /tmp/base /tmp/candidate
+  - name: Publish review artifact
+    if: always()
+    run: ./ci/publish-safe-report.sh</code></pre>
+  <p>This workflow is a structure, not a drop-in action. Check out each revision into isolated workspaces, install from each committed lockfile, and reset the test database between runs. Ensure the baseline and candidate see identical inputs and environment configuration. If only the candidate can access a service or feature flag, the comparison will measure the environment difference rather than the code change.</p>
+
+  <h2 id="diff">Compare the behavior that users and operators see</h2>
+  <p>For HTTP routes, capture the method, normalized path, status, selected response headers, and body. Normalize only values that are inherently volatile and irrelevant to the test, such as a request ID or a timestamp field whose exact value is not part of the contract. Keep security-sensitive headers in the comparison. A change to <code>Cache-Control</code>, <code>Set-Cookie</code>, <code>Location</code>, or content type can be more important than a small body difference.</p>
+  <p>For stateful operations, compare a well-defined database delta rather than a full database dump. Record which tables changed, the number of inserted or updated rows, and selected non-sensitive fields. Seed a disposable database before each run and verify the reset occurred. Avoid storing secrets or user data in artifacts; hash or omit fields that do not need to be reviewed.</p>
+  <p>Compare outbound network behavior at a controlled boundary. A harness can record selected <code>undici</code> request metadata—destination, method, and header names—without capturing authorization values or sensitive bodies. For a deterministic, self-contained test, use a local stub server or network namespace. Do not direct arbitrary pull request code to production dependencies. If the intent is to enforce zero egress, block outbound traffic at the runner rather than relying solely on a recorder.</p>
+  <p>A behavioral difference is a prompt for investigation, not automatically a failure. One useful report might show that a checkout endpoint returned the same status and body but inserted zero rows instead of one. Another might flag a default cache header change while response data remains identical. These differences have different operational significance; an engineer familiar with the service should classify them.</p>
+
+  <h2 id="noise">Control noise without hiding regressions</h2>
+  <p>Flaky comparisons erode trust quickly. Make inputs stable with a fixed test clock, seeded random values, deterministic IDs, isolated ports, and a clean database. Run base and candidate with the same resource limits and command sequence. Capture a second run when a signal is not repeatable; two-run noise masking can help identify unstable values, but it should not automatically erase a difference simply because it appeared once.</p>
+  <p>Keep normalization narrow, version-controlled, and reviewable. A global rule that strips every header or ignores all JSON field ordering can remove the very signal the test is meant to preserve. Prefer field-level rules with a written reason and owner. Report when a rule was applied so reviewers can understand what the diff does not show.</p>
+  <p>Measure test coverage of the behavior harness separately from source-code coverage. If a route is not reached, mark it “not exercised” rather than “unchanged.” If the baseline failed or the candidate could not build, make that a distinct status and retain the useful logs. A missing comparison is not a successful comparison.</p>
+
+  <h2 id="security">Run untrusted pull requests with a real isolation boundary</h2>
+  <p>Both dependency bots and coding agents can modify installation scripts, workflow files, and test configuration. Treat their branches as untrusted code. Do not expose write-capable deployment credentials to a job that runs arbitrary pull request code. Use short-lived, least-privilege tokens, disposable workers, and a policy that separates repository metadata scanning from build and test execution.</p>
+  <p>Where possible, keep static analysis in a no-egress job and run integration tests in a separate sandbox with only the local services they need. Clear credentials from the environment, disable persistent checkout credentials, and avoid reusing workspaces between pull requests. Protect the workflow definition and baseline settings with <code>CODEOWNERS</code> and required branch checks; otherwise a candidate may weaken its own verification path.</p>
+  <p>Artifacts deserve the same care as source. Retain the minimum request and database data required for review, redact sensitive fields before upload, and define a retention period. A behavioral recorder can accidentally collect personal information or secrets if it captures every request body by default. Start with an allowlist of scenarios and fields, then expand only when there is a specific review need.</p>
+
+  <h2 id="adoption">Make the signal useful to maintainers</h2>
+  <p>Start with one high-value service and a small set of stable scenarios. Run the new comparison in advisory mode while engineers inspect false positives and improve the harness. Establish which differences should block merge, which require an acknowledgment, and which are informational. Only promote a required status after the system can distinguish an unavailable test environment from a real behavioral regression.</p>
+  <p>When a difference is expected, attach a short explanation to the change record and add a focused regression test if the new behavior is part of the intended contract. Do not create a blanket suppression tied to a PR number; it will disappear from view while the code remains. If the difference is unexpected, the report should make it possible to replay the same scenario locally with the same input fixture and base SHA.</p>
+  <p>Measure whether the extra check catches issues earlier, how often it is unstable, and how long it adds to CI. Keep a small test suite that exercises the comparator itself: a changed status must be reported, a dropped cookie must remain visible, a database delta must be attributable, and a volatile field must only be normalized when explicitly configured. The verification system is also software and needs its own tests.</p>
+  <p>Neukee’s CI verification direction is to compare selected candidate behavior against a cached main baseline, including HTTP and <code>undici</code> observations and PostgreSQL row deltas, with repeat runs to help surface noise. That kind of report can help reviewers focus on meaningful differences in dependency and AI-agent PRs. It cannot certify correctness, replace code review, or eliminate the need for a sandbox. Keep the harness transparent, make its limits obvious, and require a human to decide whether a behavioral change is acceptable.</p>
+</GuideLayout>

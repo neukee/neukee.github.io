@@ -1,0 +1,35 @@
+---
+import SocialDock from './SocialDock.astro';
+---
+
+<footer class="relative border-t border-white/10 px-5 pb-6 pt-12 lg:px-8">
+  <div class="mx-auto max-w-7xl overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-white/[.075] via-white/[.025] to-violet-400/[.045] shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_30px_90px_rgba(0,0,0,.32)] backdrop-blur-2xl saturate-200">
+    <div class="grid gap-10 p-6 sm:grid-cols-2 sm:p-9 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:p-12">
+      <div>
+        <a href="/" class="inline-flex items-center gap-3"><img src="/neukee-logo-mark.png" alt="" class="h-9 w-9 object-contain mix-blend-screen" /><span class="font-display font-semibold tracking-[.18em] text-zinc-100">NEUKEE</span></a>
+        <p class="mt-4 max-w-xs text-sm leading-6 text-zinc-400">Engineering tools for modern software teams. Upgrade decisions, backed by evidence.</p>
+        <a href="mailto:venuuu.nyc@proton.me" class="mt-5 inline-flex text-sm text-violet-200 transition hover:text-white">venuuu.nyc@proton.me</a>
+        <div class="mt-5"><SocialDock /></div>
+      </div>
+      <div>
+        <h2 class="font-mono text-[11px] uppercase tracking-[.18em] text-zinc-400">Explore</h2>
+        <ul class="mt-4 space-y-3 text-sm text-zinc-300"><li><a class="hover:text-white" href="/#how-it-works">Capabilities</a></li><li><a class="hover:text-white" href="/#process">How it works</a></li><li><a class="hover:text-white" href="/guides/">Upgrade guides</a></li><li><a class="hover:text-white" href="/blog/">Field notes</a></li></ul>
+      </div>
+      <div>
+        <h2 class="font-mono text-[11px] uppercase tracking-[.18em] text-zinc-400">Trust</h2>
+        <ul class="mt-4 space-y-3 text-sm text-zinc-300"><li><a class="hover:text-white" href="/security/">Security</a></li><li><a class="hover:text-white" href="/trust/">Trust center</a></li><li><a class="hover:text-white" href="/faq/">FAQ</a></li><li><a class="hover:text-white" href="/terms/">Terms</a></li><li><a class="hover:text-white" href="/privacy/">Privacy</a></li><li><a class="hover:text-white" href="/acceptable-use/">Acceptable use</a></li></ul>
+      </div>
+      <div>
+        <h2 class="font-mono text-[11px] uppercase tracking-[.18em] text-zinc-400">Direct</h2>
+        <ul class="mt-4 space-y-3 text-sm text-zinc-300"><li><a class="hover:text-white" href="/about/">Our approach</a></li><li><a class="hover:text-white" href="/contact/">Contact</a></li><li><a class="hover:text-white" href="https://github.com/neukee/neukee" target="_blank" rel="noreferrer">GitHub ↗</a></li></ul>
+      </div>
+    </div>
+    <div aria-hidden="true" class="overflow-hidden border-t border-white/[.07] px-5 pt-4 sm:px-9">
+      <span class="block bg-gradient-to-b from-white/45 via-violet-100/20 to-white/[.04] bg-clip-text text-center font-display text-[22vw] font-bold leading-[.78] tracking-[-.09em] text-transparent">NEUKEE</span>
+    </div>
+    <div class="mx-6 mt-7 flex flex-col gap-3 border-t border-white/[.08] py-5 text-xs text-zinc-500 sm:mx-9 sm:flex-row sm:items-center sm:justify-between">
+      <span>© 2026 Neukee. Built for teams that ship.</span>
+      <span>Static site · No account required · <a class="hover:text-zinc-200" href="/privacy/">Privacy details</a></span>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,230 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TerminalDemo from '../components/TerminalDemo.astro';
+import FleetAuditSection from '../components/FleetAuditSection.astro';
+import ScrollMarquee from '../components/ScrollMarquee.astro';
+import SocialDock from '../components/SocialDock.astro';
+
+const description = 'Point Neukee at your repository and target version. Check code, lockfiles, deployment configuration, and behavioral changes before a Node.js or Next.js upgrade reaches production.';
+---
+
+<BaseLayout title="Neukee — Know what breaks before you upgrade" description={description} canonicalPath="/">
+  <div class="stack-stage">
+  <section class="neukee-hero stack-slide relative isolate overflow-hidden border-b border-white/10 px-5 py-20 sm:py-28 lg:py-32" data-stack-slide style="--stack-order: 1">
+    <div class="hero-glow pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+    <div class="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.03fr_.97fr] lg:gap-10">
+      <div data-reveal>
+        <p class="eyebrow flex items-center gap-3"><span class="h-px w-8 bg-violet-300"></span> Engineering tools for modern software teams</p>
+        <p class="mt-5 font-mono text-[10px] tracking-[.16em] text-zinc-500 sm:text-xs">NODE.JS 22 EOL · APRIL 30, 2027 · OPEN-SOURCE · AIR-GAPPED</p>
+        <h1 class="mt-7 max-w-3xl text-5xl font-semibold leading-[.92] tracking-[-.065em] text-zinc-50 sm:text-7xl lg:text-[5.8rem]">
+          Upgrade with<br />
+          <span class="display-outline font-medium">clarity.</span><br />
+          Ship with proof.
+        </h1>
+        <p class="mt-7 max-w-xl text-base leading-7 text-zinc-400 sm:text-lg sm:leading-8">
+          Find the mismatch between your manifest and the runtime you deploy. See native-addon, framework, and behavior risks before the upgrade reaches production.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a class="inline-flex items-center gap-3 rounded-md bg-violet-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-violet-300" href="#ci-engine">See a real scan <span aria-hidden="true">↓</span></a>
+          <a class="rounded-md border border-white/15 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:border-violet-300/50 hover:bg-white/[.04]" href="mailto:venuuu.nyc@proton.me">Talk to the engineer <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="mt-8 inline-flex max-w-full items-center gap-3 rounded-md border border-white/10 bg-white/[.04] px-4 py-2.5 font-mono text-xs text-zinc-300 backdrop-blur-md">
+          <span class="text-emerald-400">$</span><code class="overflow-x-auto">npx neukee scan --target node26</code>
+          <button type="button" class="rounded border border-white/10 px-2 py-1 text-[10px] text-zinc-400 hover:text-white" data-copy-command aria-label="Copy Neukee scan command">Copy</button>
+        </div>
+        <p class="mt-2 min-h-4 font-mono text-[10px] text-zinc-600" aria-live="polite" data-command-status></p>
+        <div class="mt-5 flex items-center gap-3">
+          <span class="font-mono text-[10px] uppercase tracking-[.15em] text-zinc-500">Find Neukee</span>
+          <SocialDock />
+        </div>
+      </div>
+      <div class="relative mx-auto w-full max-w-xl" data-reveal>
+        <div class="absolute -inset-8 rounded-full bg-violet-600/20 blur-[80px]" aria-hidden="true"></div>
+        <div class="glass-surface hero-float relative rounded-2xl p-4 sm:p-6">
+          <div class="flex items-center justify-between border-b border-white/10 pb-4">
+            <div class="flex items-center gap-3"><img src="/neukee-logo-mark.png" alt="" class="h-8 w-8 object-contain mix-blend-screen" /><div><p class="text-sm font-medium text-zinc-100">Upgrade readiness</p><p class="font-mono text-[10px] text-zinc-500">neukee scan · local analysis</p></div></div>
+            <span class="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 font-mono text-[9px] text-violet-200">PRE-MERGE</span>
+          </div>
+          <div class="mt-5 flex items-center justify-between rounded-lg border border-white/[.07] bg-black/30 p-3 font-mono text-[10px]">
+            <span class="text-zinc-500">TARGET</span><span class="text-zinc-200">node26 · next16</span><span class="text-amber-300">3 findings</span>
+          </div>
+          <div class="mt-4 space-y-3">
+            <div class="rounded-lg border border-red-400/15 bg-red-400/[.04] p-3.5">
+              <div class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-red-400"></span><span class="font-mono text-[10px] text-red-300">RUNTIME_DRIFT</span><span class="ml-auto font-mono text-[9px] text-zinc-600">BLOCKER</span></div>
+              <p class="mt-2 text-xs text-zinc-300"><code>.nvmrc</code> → Node 24 <span class="text-zinc-600">/</span> Docker → Node 20</p>
+            </div>
+            <div class="rounded-lg border border-amber-300/15 bg-amber-300/[.035] p-3.5">
+              <div class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span><span class="font-mono text-[10px] text-amber-200">NEXT16_ASYNC_API</span><span class="ml-auto font-mono text-[9px] text-zinc-600">REVIEW</span></div>
+              <p class="mt-2 text-xs text-zinc-300">Synchronous <code>cookies()</code> found in a server route</p>
+            </div>
+            <div class="rounded-lg border border-white/[.07] bg-black/20 p-3.5">
+              <div class="flex items-center justify-between font-mono text-[10px]"><span class="text-zinc-400">Behavioral compare</span><span class="text-emerald-300">42 / 45 routes</span></div>
+              <div class="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-800"><div class="h-full w-[82%] rounded-full bg-gradient-to-r from-violet-400 to-emerald-300"></div></div>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between border-t border-white/10 pt-4 font-mono text-[9px] uppercase tracking-[.12em] text-zinc-600">
+            <span>NO EGRESS</span><span>LOCKFILE AWARE</span><span>SARIF READY</span>
+          </div>
+        </div>
+        <div class="absolute -bottom-5 -left-4 rounded-lg border border-white/10 bg-[#15121c]/90 px-4 py-3 font-mono text-[10px] text-zinc-300 shadow-xl backdrop-blur-xl sm:-left-10">
+          <span class="text-violet-300">↳</span> release note cited <span class="ml-2 text-emerald-300">✓</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <section class="border-b border-white/10 bg-white/[.025] py-4" aria-label="Neukee engineering focus">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-5 font-mono text-[10px] tracking-[.18em] text-zinc-500 sm:text-xs lg:justify-between lg:px-8">
+      <span class="text-violet-200">RUNTIME</span><span>LOCKFILES</span><span>FRAMEWORKS</span><span>BEHAVIOR</span><span>CI EVIDENCE</span>
+    </div>
+  </section>
+
+  <ScrollMarquee />
+
+  <div class="mx-auto max-w-7xl px-5 pt-8 lg:px-8" aria-label="Neukee brand" data-reveal>
+    <img class="aspect-[6/1] w-full rounded-xl border border-zinc-800 object-cover object-[72%_center]" src="/neukee-brand-banner.png" alt="Neukee — Engineering tools for modern software teams" width="2512" height="416" loading="lazy" />
+    <div class="mx-auto mt-5 flex max-w-md justify-center">
+      <div class="h-[110px] w-[220px] overflow-hidden rounded-lg border border-zinc-800 bg-black">
+        <img src="/neukee-logotype.png" alt="Neukee official logo and wordmark" class="ml-[-40px] mt-[-58px] h-auto w-[300px] max-w-none mix-blend-screen" width="1001" height="768" loading="lazy" />
+      </div>
+    </div>
+  </div>
+
+  <div class="stack-stage">
+  <section id="ci-engine" class="stack-slide mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24" data-stack-slide style="--stack-order: 2">
+    <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">See the signal, not the sales pitch</p>
+        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">A real upgrade diff has receipts.</h2>
+      </div>
+      <p class="max-w-md text-sm leading-6 text-zinc-500">Move between static findings, behavioral changes, and a GitHub Actions workflow. Copy any report to share it with your team.</p>
+    </div>
+    <TerminalDemo />
+  </section>
+  </div>
+
+  <div class="stack-stage">
+  <section id="how-it-works" class="stack-slide mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28" data-stack-slide style="--stack-order: 3">
+    <div class="max-w-3xl">
+      <p class="eyebrow">01 / Capabilities</p>
+      <h2 class="mt-4 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl">Upgrades rarely fail on the change you read about.</h2>
+      <p class="mt-5 text-lg leading-8 text-zinc-400">The hard failures hide between the release notes and the way your application is actually installed, deployed, and exercised. Neukee connects those clues before the migration branch becomes a production incident.</p>
+    </div>
+    <div class="mt-11 grid gap-4 md:grid-cols-3">
+      <article class="glass-surface rounded-xl p-6 transition duration-300 hover:-translate-y-1 hover:border-violet-300/30" data-reveal>
+        <span class="font-mono text-xs text-violet-300">01 / ENVIRONMENT</span>
+        <h3 class="mt-5 text-xl font-semibold">Runtime &amp; deploy drift</h3>
+        <p class="mt-3 text-sm leading-7 text-zinc-400">One application can quietly declare several Node versions. Neukee compares <code class="font-mono text-xs text-zinc-300">.nvmrc</code>, <code class="font-mono text-xs text-zinc-300">package.json#engines</code>, Docker base images, CI workflows, and deployment settings for mismatches that make “works on my machine” inevitable.</p>
+        <p class="mt-4 text-sm leading-7 text-zinc-500">The result is a concrete map of which runtime each build and release path really selects—including container and serverless configuration that a package manifest cannot tell you.</p>
+      </article>
+      <article class="glass-surface rounded-xl p-6 transition duration-300 hover:-translate-y-1 hover:border-violet-300/30" data-reveal>
+        <span class="font-mono text-xs text-violet-300">02 / DEPENDENCIES</span>
+        <h3 class="mt-5 text-xl font-semibold">What you really install</h3>
+        <p class="mt-3 text-sm leading-7 text-zinc-400">Manifests describe intent; lockfiles describe the resolved graph. Neukee inspects pnpm and npm lock data to flag native C++ addons, Node-API constraints, and React peer dependency conflicts without running <code class="font-mono text-xs text-zinc-300">npm install</code> or package lifecycle scripts.</p>
+        <p class="mt-4 text-sm leading-7 text-zinc-500">That keeps the scan useful in restricted environments and focuses review on the transitive packages that can fail only after a runtime or framework boundary moves.</p>
+      </article>
+      <article class="glass-surface rounded-xl p-6 transition duration-300 hover:-translate-y-1 hover:border-violet-300/30" data-reveal>
+        <span class="font-mono text-xs text-violet-300">03 / BEHAVIOR</span>
+        <h3 class="mt-5 text-xl font-semibold">Continuous behavioral verification</h3>
+        <p class="mt-3 text-sm leading-7 text-zinc-400">For dependency and AI-agent pull requests, a self-hosted CI engine can compare candidate behavior with a cached <code class="font-mono text-xs text-zinc-300">main</code> baseline: HTTP responses, <code class="font-mono text-xs text-zinc-300">undici</code> traffic, and PostgreSQL row deltas.</p>
+        <p class="mt-4 text-sm leading-7 text-zinc-500">Automatic two-run noise masking helps separate repeatable differences from volatile values. Teams review the evidence and decide whether a change is expected; the tool does not silently rewrite assertions.</p>
+      </article>
+    </div>
+  </section>
+  </div>
+
+  <section id="process" class="border-y border-white/10 bg-[#0d0b12]" data-reveal>
+    <div class="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+      <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div><p class="eyebrow">02 / How the work moves</p><h2 class="mt-4 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Make the risky part visible. Then make a decision.</h2></div>
+        <p class="max-w-lg leading-7 text-zinc-400">A useful upgrade review is a short chain of evidence—not a mysterious green check. Every step should leave your team with an artifact it can inspect and rerun.</p>
+      </div>
+      <div class="mt-12 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <article class="bg-[#0d0b12] p-6 sm:p-7" data-reveal><p class="font-mono text-xs text-violet-300">01 / SCOPE</p><h3 class="mt-5 text-lg font-semibold">Name the move.</h3><p class="mt-3 text-sm leading-6 text-zinc-500">Choose source and target versions, repositories, deployment paths, and an owner for each service.</p></article>
+        <article class="bg-[#0d0b12] p-6 sm:p-7" data-reveal><p class="font-mono text-xs text-violet-300">02 / INSPECT</p><h3 class="mt-5 text-lg font-semibold">Map the reality.</h3><p class="mt-3 text-sm leading-6 text-zinc-500">Compare runtime declarations, resolved lockfiles, source patterns, and the configs that ship the app.</p></article>
+        <article class="bg-[#0d0b12] p-6 sm:p-7" data-reveal><p class="font-mono text-xs text-violet-300">03 / COMPARE</p><h3 class="mt-5 text-lg font-semibold">Exercise the change.</h3><p class="mt-3 text-sm leading-6 text-zinc-500">Where configured, compare selected routes and persisted effects against a pinned main-branch baseline.</p></article>
+        <article class="bg-[#0d0b12] p-6 sm:p-7" data-reveal><p class="font-mono text-xs text-violet-300">04 / DECIDE</p><h3 class="mt-5 text-lg font-semibold">Ship with context.</h3><p class="mt-3 text-sm leading-6 text-zinc-500">Review source-linked findings, note the unknowns, and keep the rollback decision with the release.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack-stage">
+  <section class="stack-slide border-y border-zinc-800 bg-[#0c0c0e]" data-stack-slide style="--stack-order: 4">
+    <div class="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-8 lg:py-24">
+      <div>
+        <p class="eyebrow">03 / Trust boundaries first</p>
+        <h2 class="mt-4 text-3xl font-semibold tracking-tight">Built to be the safest binary in your CI.</h2>
+        <p class="mt-4 leading-7 text-zinc-400">Upgrade tooling often receives untrusted pull request code. Neukee’s design goal is to learn from repository metadata without executing the repository.</p>
+        <a class="mt-7 inline-flex items-center gap-2 text-sm font-medium text-violet-300 hover:text-violet-200" href="/security/">Read the security architecture <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="rounded-lg border border-zinc-800 bg-surface p-5"><h3 class="font-semibold">No-egress by design</h3><p class="mt-2 text-sm leading-6 text-zinc-500">Static checks can run without reaching package registries, analytics services, or external APIs.</p></div>
+        <div class="rounded-lg border border-zinc-800 bg-surface p-5"><h3 class="font-semibold">No project execution</h3><p class="mt-2 text-sm leading-6 text-zinc-500">Parsing metadata is different from installing packages or invoking repository scripts.</p></div>
+        <div class="rounded-lg border border-zinc-800 bg-surface p-5"><h3 class="font-semibold">Bounded input handling</h3><p class="mt-2 text-sm leading-6 text-zinc-500">Size limits, symlink refusal, and bounded matching constrain hostile repository inputs.</p></div>
+        <div class="rounded-lg border border-zinc-800 bg-surface p-5"><h3 class="font-semibold">Evidence in the review</h3><p class="mt-2 text-sm leading-6 text-zinc-500">Findings are explainable and exportable so humans can decide what blocks a release.</p></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <section class="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24" data-reveal>
+    <div class="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+      <div class="max-w-2xl"><p class="eyebrow">04 / A deliberate roadmap</p><h2 class="mt-4 text-3xl font-semibold tracking-tight">Small, inspectable steps toward safer upgrades.</h2><p class="mt-4 leading-7 text-zinc-400">The roadmap is a direction, not a promise that every capability is already available. Validate current features in the project repository before adopting them.</p></div>
+      <div class="font-mono text-xs text-zinc-600">OPEN DEVELOPMENT · BUILT IN PUBLIC</div>
+    </div>
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+      <div class="glass-surface rounded-xl p-6" data-reveal><p class="font-mono text-xs text-violet-300">CURRENT FOUNDATION</p><h3 class="mt-4 text-xl font-semibold">v0.1.0 · Dec 8, 2026</h3><p class="mt-3 text-sm leading-6 text-zinc-400">Repository-level upgrade checks, actionable findings, and machine-readable output form the initial surface.</p></div>
+      <div class="glass-surface rounded-xl p-6" data-reveal><p class="font-mono text-xs text-amber-300">NEXT / DESIGN PARTNERS</p><h3 class="mt-4 text-xl font-semibold">v0b · Behavioral verification</h3><p class="mt-3 text-sm leading-6 text-zinc-400">Explore side-by-side application evidence for teams that need stronger confidence in dependency changes.</p></div>
+      <div class="glass-surface rounded-xl p-6" data-reveal><p class="font-mono text-xs text-zinc-500">FUTURE DIRECTION</p><h3 class="mt-4 text-xl font-semibold">v1 · Enterprise platform</h3><p class="mt-3 text-sm leading-6 text-zinc-400">Fleet-level reporting and governance remain a longer-term direction shaped by security and user feedback.</p></div>
+    </div>
+  </section>
+
+  <div class="stack-stage">
+    <FleetAuditSection />
+  </div>
+</BaseLayout>
+
+<script>
+  function initializeCommandCopy() {
+    const commandButton = document.querySelector<HTMLButtonElement>('[data-copy-command]');
+    const commandStatus = document.querySelector<HTMLElement>('[data-command-status]');
+    if (!commandButton || commandButton.dataset.bound === 'true') return;
+    commandButton.dataset.bound = 'true';
+    commandButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText('npx neukee scan --target node26');
+        commandButton.textContent = 'Copied!';
+        if (commandStatus) commandStatus.textContent = 'Command copied to clipboard.';
+      } catch (error) {
+        if (commandStatus) commandStatus.textContent = 'Clipboard access unavailable. Select and copy the command.';
+        console.error('Unable to copy the Neukee command.', error);
+      }
+      window.setTimeout(() => { if (commandButton) commandButton.textContent = 'Copy'; }, 1600);
+    });
+  }
+  initializeCommandCopy();
+  document.addEventListener('astro:page-load', initializeCommandCopy);
+</script>
+
+<style>
+  .neukee-hero::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgba(196, 181, 253, .3) .75px, transparent .75px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to right, transparent, black 35%, black 90%, transparent);
+    content: "";
+    pointer-events: none;
+  }
+  .hero-glow {
+    background:
+      radial-gradient(ellipse at 78% 45%, rgba(124, 58, 237, .2), transparent 42%),
+      radial-gradient(ellipse at 17% 8%, rgba(16, 185, 129, .08), transparent 40%),
+      linear-gradient(135deg, #08070b 12%, #0c0912 58%, #100b18);
+  }
+  .hero-float { animation: hero-drift 9s ease-in-out infinite; }
+  @keyframes hero-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  @media (prefers-reduced-motion: reduce) { .hero-float { animation: none; } }
+</style>

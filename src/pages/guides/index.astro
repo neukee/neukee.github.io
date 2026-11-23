@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const description = 'Practical, evidence-based migration guides for Node.js runtime upgrades, Next.js breaking changes, and reviewing dependency or AI-agent pull requests.';
+const guides = [
+  {
+    href: '/guides/node-22-eol-migration-checklist/',
+    label: 'NODE.JS LIFECYCLE',
+    title: 'The Node.js 22 EOL migration checklist',
+    text: 'Plan the move to a supported runtime with a repo-by-repo inventory, a seven-point engineering audit, and a staged rollout—not a fleet-wide version bump.',
+  },
+  {
+    href: '/guides/node-22-to-26-breaking-changes/',
+    label: 'RUNTIME COMPATIBILITY',
+    title: 'Node.js 22 to 26: breaking changes to test',
+    text: 'Understand the OpenSSL provider shift, native-addon ABI boundary, require(esm) behavior, and deprecated APIs that can surface during a multi-major upgrade.',
+  },
+  {
+    href: '/guides/nextjs-15-to-16-upgrade-guide/',
+    label: 'FRAMEWORK MIGRATION',
+    title: 'Next.js 15 to 16 upgrade guide',
+    text: 'Migrate async request APIs, audit cache semantics, resolve React peer dependencies, and add coverage beyond automated codemods.',
+  },
+  {
+    href: '/guides/verify-ai-agent-prs-in-ci/',
+    label: 'CI & REVIEW',
+    title: 'How to verify AI-agent pull requests in CI',
+    text: 'Pair unit tests with repeatable baseline-versus-candidate evidence to catch integration behavior that mocks and review summaries cannot prove.',
+  },
+];
+---
+
+<BaseLayout title="Node.js & Next.js Upgrade Guides | Neukee" {description} canonicalPath="/guides/">
+  <section class="border-b border-zinc-800 bg-[#0c0c0e]">
+    <div class="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+      <p class="font-mono text-xs uppercase tracking-[.2em] text-emerald-300">Field notes for software teams</p>
+      <h1 class="mt-5 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl">Guides for the upgrades hiding in your dependency graph.</h1>
+      <p class="mt-6 max-w-3xl text-lg leading-8 text-zinc-400">Technical migration notes for teams that want to know what they need to test before a new runtime or framework version is in production. Each guide pairs migration choices with concrete code and review steps.</p>
+    </div>
+  </section>
+  <section class="mx-auto grid max-w-7xl gap-4 px-5 py-14 md:grid-cols-2 lg:px-8 lg:py-20">
+    {guides.map((guide, index) => (
+      <a href={guide.href} class="group rounded-xl border border-zinc-800 bg-surface p-7 transition hover:border-emerald-500/40">
+        <p class="font-mono text-[11px] tracking-[.16em] text-emerald-300">{guide.label} <span class="ml-2 text-zinc-600">/ 0{index + 1}</span></p>
+        <h2 class="mt-5 text-2xl font-semibold tracking-tight group-hover:text-emerald-100">{guide.title}</h2>
+        <p class="mt-3 leading-7 text-zinc-400">{guide.text}</p>
+        <span class="mt-7 inline-flex items-center gap-2 text-sm text-zinc-300">Read the guide <span class="transition group-hover:translate-x-1">→</span></span>
+      </a>
+    ))}
+  </section>
+  <div class="mx-auto max-w-7xl px-5 pb-20 lg:px-8">
+    <div class="rounded-xl border border-zinc-800 bg-[#0c0c0e] p-6 text-sm leading-6 text-zinc-500">
+      <strong class="text-zinc-300">Check the upstream schedule before you set dates.</strong>
+      Runtime and framework support policies change. These articles explain engineering practices; always confirm version status and migration requirements against the linked official release notes before making production decisions.
+    </div>
+  </div>
+</BaseLayout>

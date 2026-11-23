@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="glow" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#10b981" stop-opacity=".2"/><stop offset="1" stop-color="#09090b" stop-opacity="0"/></linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0v40" fill="none" stroke="#27272a"/></pattern>
+  </defs>
+  <path fill="#09090b" d="M0 0h1200v630H0z"/><path fill="url(#grid)" d="M0 0h1200v630H0z"/><path fill="url(#glow)" d="M0 0h1200v630H0z"/>
+  <g transform="translate(90 85)"><rect width="56" height="44" rx="6" fill="none" stroke="#10b981" stroke-width="4"/><path d="m15 15 8 7-8 7m17 0h9" fill="none" stroke="#fafafa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="74" y="34" fill="#fafafa" font-family="Arial,sans-serif" font-size="29" font-weight="700" letter-spacing="3">NEUKEE</text></g>
+  <text x="90" y="270" fill="#fafafa" font-family="Arial,sans-serif" font-size="62" font-weight="700">Know what breaks</text>
+  <text x="90" y="345" fill="#fafafa" font-family="Arial,sans-serif" font-size="62" font-weight="700">before you upgrade.</text>
+  <text x="94" y="422" fill="#a1a1aa" font-family="Arial,sans-serif" font-size="25">Repository-aware Node.js and Next.js upgrade readiness.</text>
+  <text x="94" y="520" fill="#34d399" font-family="monospace" font-size="21">OPEN-SOURCE  ·  AIR-GAPPED  ·  DETERMINISTIC</text>
+</svg>

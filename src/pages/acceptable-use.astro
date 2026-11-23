@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'Acceptable Use Policy for the Neukee website and repository-analysis tools, with practical rules for authorization, CI isolation, data handling, and responsible disclosure.';
+---
+
+<BaseLayout title="Acceptable Use Policy | Neukee" {description} canonicalPath="/acceptable-use/">
+  <section class="border-b border-white/10 bg-[#0d0b12] px-5 py-16 sm:py-20" data-reveal>
+    <div class="mx-auto max-w-7xl"><p class="eyebrow">Use engineering tools responsibly</p><h1 class="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">Acceptable use</h1><p class="mt-5 max-w-2xl text-sm text-zinc-500">Last updated: November 23, 2026 · Applies to this website and use of Neukee project materials.</p></div>
+  </section>
+  <article class="prose-technical mx-auto max-w-4xl px-5 py-10 lg:px-8 lg:py-16" data-reveal>
+    <p>Neukee is intended to help teams understand software upgrade risk in repositories they own or are authorized to assess. This policy sets safe-use expectations; it does not grant authorization to access any third-party system, repository, account, or network.</p>
+    <h2 id="authorized">1. Use only systems you are allowed to assess</h2>
+    <p>Before running a tool, confirm that you own the repository or have written authorization from its owner. Follow your employer’s policies, customer agreements, and the rules of the CI platform. Do not use Neukee examples or commands to probe a third-party system without permission.</p>
+    <h2 id="secure-ci">2. Protect the CI boundary</h2>
+    <ul>
+      <li>Use least-privilege tokens and do not expose secrets to untrusted pull-request code.</li>
+      <li>Run arbitrary builds and tests in isolated, disposable environments.</li>
+      <li>Keep static analysis separate from code-execution jobs where practical.</li>
+      <li>Block unnecessary outbound access and review workflow or scanner configuration changes.</li>
+      <li>Use synthetic test data; never capture production customer records in behavioral artifacts.</li>
+    </ul>
+    <h2 id="data">3. Handle repository data carefully</h2>
+    <p>Do not send credentials, private keys, customer data, or source code through the public contact form or an email unless you are authorized and have selected a suitable secure channel. Keep reports limited to the evidence a reviewer needs. Redact secrets before sharing logs, traces, or screenshots.</p>
+    <h2 id="forbidden">4. Prohibited activity</h2>
+    <p>You may not use this Site or project to break the law, disrupt services, bypass access controls, exfiltrate data, distribute malware, evade security monitoring, or misrepresent the results of a scan. Do not alter reports to hide known risk or claim that a static scan certifies a system as secure or compliant.</p>
+    <h2 id="disclosure">5. Responsible disclosure</h2>
+    <p>If you find a vulnerability in the Site or Neukee project, email <a href="mailto:venuuu.nyc@proton.me?subject=Security%20report">venuuu.nyc@proton.me</a> with a concise description, affected version or URL, and safe reproduction steps. Avoid testing against other users’ data, destructive actions, persistence, or public disclosure before coordinating a fix.</p>
+    <h2 id="limits">6. No authorization or service-level promise</h2>
+    <p>This policy does not create a service contract, grant access to any system, or promise a response time. Neukee may restrict access to the Site or project resources when needed to protect users, infrastructure, or legal obligations. Questions about this policy can be sent to <a href="mailto:venuuu.nyc@proton.me">venuuu.nyc@proton.me</a>.</p>
+  </article>
+</BaseLayout>

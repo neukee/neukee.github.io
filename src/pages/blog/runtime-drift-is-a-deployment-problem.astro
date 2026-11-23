@@ -1,0 +1,34 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+
+const title = 'Runtime Drift Is a Deployment Problem, Not a Version-File Problem';
+const description = 'A practical way to find Node.js version drift across developer tools, CI workflows, Docker images, serverless settings, and production.';
+const path = '/blog/runtime-drift-is-a-deployment-problem/';
+---
+
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23">
+  <Fragment slot="toc">
+    <a class="block hover:text-violet-200" href="#one-service-many-versions">One service, many versions</a>
+    <a class="block hover:text-violet-200" href="#inventory">Build the inventory</a>
+    <a class="block hover:text-violet-200" href="#verify">Verify the deployed artifact</a>
+    <a class="block hover:text-violet-200" href="#migration">Make the migration testable</a>
+  </Fragment>
+  <p>Runtime configuration often looks tidy in the main repository. There is a version file, a package engine range, and a CI job that runs tests. Then production starts from a container tag, a serverless runtime setting, or a platform default that nobody included in the migration diff. The application was not really “on Node 22”; the team had several different answers to that question.</p>
+  <p>This mismatch is operational, not merely cosmetic. A native addon may compile under one Node ABI and fail in another image. A modern TLS policy may behave differently in a different runtime build. A CI test can pass against a developer version while deployment rebuilds dependencies for a distinct libc or architecture.</p>
+  <h2 id="one-service-many-versions">One service can select several versions</h2>
+  <p>Start by treating each place that selects a runtime as part of the production design. A repository may include <code>.nvmrc</code>, <code>.node-version</code>, Volta settings, <code>package.json#engines</code>, a Docker base image, an action setup version, and platform-specific build settings. Add release scripts, scheduled tasks, preview deployments, and the image used to compile native dependencies.</p>
+  <p>These values serve different audiences. A version manager file helps a developer select a local runtime. The package manager may only warn about an engines mismatch. CI selects the binary that runs the job. A Dockerfile chooses the image used during build and run. A deployment platform may select yet another runtime based on configuration or an account-level default. A consistent-looking package manifest does not prove that these choices align.</p>
+  <h2 id="inventory">Build the inventory before changing the pin</h2>
+  <p>Create a small matrix for each deployable unit: repository and path, declared version, CI version, build image, runtime image, hosting setting, owner, and proposed target. Use repository search to discover candidates, then confirm values in the actual deployment configuration. Do not treat every text match as active configuration; examples, archived workflows, and comments can create false positives. Conversely, a setting stored in a separate infrastructure repository may not appear in an application search at all.</p>
+  <p>Once the inventory exists, make the expected version explicit. A single policy can still permit tool-specific versions—for example, a build tool running a supported LTS while the application runtime moves to a newer line—but document why. Verify that CI fails when the runtime unexpectedly differs instead of relying on the output log being noticed.</p>
+  <pre is:raw><code># A visible assertion in the job that tests the application
+node --version
+node -e "if (process.versions.node.split('.')[0] !== '24') process.exit(1)"</code></pre>
+  <p>The check is intentionally simple: it prevents accidental drift from turning into a silent green result. Adjust the major to the service’s chosen target and keep that policy aligned with the deployment image.</p>
+  <h2 id="verify">Verify the artifact that will run</h2>
+  <p>Test the final image, not just the build stage. Multi-stage container builds can copy compiled output from one image into a runtime image with a different Node binary. Native modules may be tied to the build image’s ABI, operating system, CPU architecture, and C library. If the production image is distroless or Alpine-based, test that runtime family deliberately rather than extrapolating from a developer laptop.</p>
+  <p>For serverless or managed runtimes, inspect the platform’s deployed function configuration and build output. A CI test that invokes <code>node --version</code> confirms only the CI job. It says nothing about the runtime configured in the deployed artifact or account. Add a lightweight deployment assertion, image inspection, or smoke test that records the actual runtime version without disclosing environment secrets.</p>
+  <h2 id="migration">Make the migration testable</h2>
+  <p>Keep runtime movement separate from broad dependency churn when the release schedule allows it. Lock the dependency graph, choose the target image, and execute a production-like build. If the migration also requires a native package update, test that package and target platform in an isolated step so a failure has a clear cause.</p>
+  <p>Then roll out by service risk, not by repository order. Start with a low-blast-radius service that exercises the same build chain, capture cold-start and error-rate signals, and document the rollback condition. A good runtime migration review tells future maintainers which version was selected in each environment and why. That record turns the next upgrade from archaeology into a planned change.</p>
+</GuideLayout>

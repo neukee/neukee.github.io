@@ -1,0 +1,102 @@
+---
+import GuideLayout from '../../layouts/GuideLayout.astro';
+
+const title = 'Next.js 15 to 16 Upgrade Guide: Async APIs, Caching, and React 19';
+const description = 'A production-minded Next.js 15 to 16 migration guide covering async request APIs, fetch and route-handler caching, React peer dependencies, and codemod gaps.';
+const path = '/guides/nextjs-15-to-16-upgrade-guide/';
+---
+
+<GuideLayout {title} {description} canonicalPath={path}>
+  <Fragment slot="toc">
+    <a class="block hover:text-emerald-300" href="#before">Before the upgrade</a>
+    <a class="block hover:text-emerald-300" href="#async-apis">Async request APIs</a>
+    <a class="block hover:text-emerald-300" href="#caching">Caching semantics</a>
+    <a class="block hover:text-emerald-300" href="#react">React peer dependencies</a>
+    <a class="block hover:text-emerald-300" href="#codemods">What codemods miss</a>
+    <a class="block hover:text-emerald-300" href="#release">Verify before release</a>
+  </Fragment>
+
+  <p>A Next.js major upgrade is not finished when the compiler accepts the new version. Next.js 15 already moved request-specific APIs toward asynchronous access and changed caching defaults. Next.js 16 continues that direction and introduces additional changes that depend on the exact release and enabled features. Treat the migration as a behavior review across rendering, data fetching, routing, and dependency resolution—not just a mechanical codemod run.</p>
+  <p>Start by reading the official <a href="https://nextjs.org/docs/app/guides/upgrading/version-16" target="_blank" rel="noreferrer">Next.js 16 upgrade guide</a>, then lock the exact target version and review its release notes. Do not copy a setting from a different Next minor into production without checking whether the corresponding feature is enabled in your project. Keep the existing app router or pages router context explicit throughout the migration.</p>
+
+  <h2 id="before">Establish a baseline before changing dependencies</h2>
+  <p>Record the current Next.js, React, React DOM, Node, and package-manager versions from the lockfile and deployment build. Save representative outputs for dynamic pages, static pages, route handlers, redirects, cookies, and authenticated content. For production, include CDN and platform cache headers: the browser-visible behavior can differ from what a local development server suggests.</p>
+  <p>Identify all request-bound values. Search app routes for <code>cookies()</code>, <code>headers()</code>, route <code>params</code>, and page <code>searchParams</code>. Find where their values influence data fetching or rendered output. A route may have looked static while only one query parameter or cookie made it user-specific; changing how that value is awaited can reveal the actual dynamic boundary.</p>
+  <p>Run a clean install from the committed lockfile and save the complete dependency resolution. If the upgrade changes React’s peer range, avoid using a force flag as the first response. A peer conflict is a signal to understand which component library or test renderer is constraining the graph.</p>
+
+  <h2 id="async-apis">Migrate request APIs to asynchronous access</h2>
+  <p>In the app router, request-specific APIs are asynchronous in current Next.js versions. Code that immediately reads a cookie or header must await the API. Dynamic route parameters and search parameters may also be promised depending on the route entry point and version. Update the function signature and the access site together; a codemod can transform common forms but may not understand wrappers, aliases, helper functions, or generated types throughout a repository.</p>
+  <pre is:raw><code>// Before
+import { cookies, headers } from 'next/headers';
+
+export default function AccountPage() {
+  const session = cookies().get('session');
+  const requestId = headers().get('x-request-id');
+  return &lt;Account session={session?.value} requestId={requestId} /&gt;;
+}
+
+// After
+import { cookies, headers } from 'next/headers';
+
+export default async function AccountPage() {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const session = cookieStore.get('session');
+  const requestId = headerStore.get('x-request-id');
+  return &lt;Account session={session?.value} requestId={requestId} /&gt;;
+}</code></pre>
+  <p>Do not add <code>async</code> mechanically to every component. Server components can be asynchronous where supported, but a client component cannot become an async server component by changing its declaration. If a client boundary needs request-derived data, fetch or resolve it in the server parent and pass only the necessary serializable value. Keep secrets server-side and avoid passing raw session tokens to browser code.</p>
+  <p>For dynamic routes, check the framework’s generated types and await params at the boundary. Then verify metadata generation, layouts, parallel routes, and route handlers, not only the page component. A reusable helper that used to accept a synchronous cookie store may need a typed promise or an explicit data object instead. Update tests so they exercise the request-bound code through the framework or a realistic adapter.</p>
+  <pre is:raw><code>// Example route page shape for async params
+type PageProps = {
+  params: Promise&lt;{ slug: string }&gt;;
+  searchParams: Promise&lt;{ preview?: string }&gt;;
+};
+
+export default async function ArticlePage({ params, searchParams }: PageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  return &lt;Article slug={slug} preview={query.preview === '1'} /&gt;;
+}</code></pre>
+  <p>Use the exact prop shape generated or documented by your installed Next.js version. Framework type helpers and generated route definitions can evolve, so compare the compiled result with the version-specific documentation rather than assuming this illustrative signature is universal.</p>
+
+  <h2 id="caching">Recheck fetch and route-handler caching</h2>
+  <p>Next.js 15 changed the default caching behavior for <code>fetch</code> and GET route handlers; requests that previously appeared cached by default may now be dynamic unless caching is explicitly selected. That distinction can affect both correctness and cost. An endpoint returning public catalog data may lose a beneficial cache, while a response containing account-specific information must not be shared across users.</p>
+  <p>Make cache intent visible at the call site and verify each relevant API against the target version. For data that is safe to reuse, use the framework-supported caching mechanism and define a revalidation policy. For data that depends on a cookie, authorization header, or user identity, ensure it remains private and is not placed in a shared cache. Route handler caching is separate from application-level caches, CDN behavior, and browser caching; inspect all layers.</p>
+  <pre is:raw><code>// Before: implicit caching assumptions
+export async function GET() {
+  const inventory = await fetch('https://catalog.internal/items');
+  return Response.json(await inventory.json());
+}
+
+// After: explicit revalidation intent for public catalog data
+export async function GET() {
+  const inventory = await fetch('https://catalog.internal/items', {
+    next: { revalidate: 300 },
+  });
+  return Response.json(await inventory.json(), {
+    headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300' },
+  });
+}</code></pre>
+  <p>The after example is appropriate only if the endpoint is genuinely public and the upstream data can be stale for five minutes. It does not replace checking route segment configuration, framework caching rules, or deployment-provider behavior. For authenticated endpoints, write an explicit test that requests as two distinct users and confirms that neither response leaks into the other’s cache. Also test invalidation after writes, not just the first GET.</p>
+  <p>For a migration diff, compare status, body, relevant response headers, cache tags, and revalidation timing between the old and new builds. A response body can be identical while its cache policy changes substantially. A low-level test that stubs <code>fetch</code> will not reveal a CDN that begins caching a private response.</p>
+
+  <h2 id="react">Resolve React 19 peer dependencies deliberately</h2>
+  <p>Check the React and React DOM versions required by the exact Next.js target and compare them with the peer ranges of component libraries, design systems, test utilities, and custom renderers. A clean package-manager resolution does not prove that the combination works at runtime. Conversely, an older peer range does not always prove incompatibility; examine the package’s release notes and test the integration rather than suppressing the warning without review.</p>
+  <p>Upgrade or replace unsupported packages in isolated steps where possible. If a dependency intentionally supports a broader range but has stale metadata, document that reasoning, run its interaction tests, and track the issue upstream. Avoid mixing a Next major upgrade with a wholesale component library redesign, which makes regressions much harder to attribute.</p>
+
+  <h2 id="codemods">What @next/codemod does not establish</h2>
+  <p>The official codemods are useful accelerators. They can update recognized syntax patterns, but they cannot infer whether a cache is safe for customer data, whether a component truly belongs on the server, or whether your third-party API uses a compatible React peer range. They may not follow aliases, dynamic wrappers, generated files, or repository-specific abstractions. A codemod finishing without errors means the transformation ran, not that every required migration is complete.</p>
+  <p>Review the diff, search again for synchronous request API usage, run type checking, and inspect warnings from a production build. Examine changed imports, route exports, metadata functions, and tests. Do not accept changes to generated or vendored files without understanding whether they should be regenerated or excluded.</p>
+  <p>Then exercise routes by behavior: anonymous versus authenticated, fresh versus cached data, valid versus invalid search parameters, and a mutation followed by a read. Include deployment-specific headers and an integration check against a representative database or service. For pages with server actions, verify authorization and cache invalidation after the action completes.</p>
+
+  <h2 id="release">Verify the target build like a user will encounter it</h2>
+  <ol>
+    <li>Pin exact Next.js, React, React DOM, and Node versions in the lockfile and deployment configuration.</li>
+    <li>Run the documented migration codemod, review its full diff, and search for remaining synchronous APIs.</li>
+    <li>Build in production mode and test every route class, including middleware, metadata, and route handlers.</li>
+    <li>Compare response bodies, status codes, headers, cache behavior, and persisted effects against the baseline.</li>
+    <li>Test the dependency graph without force flags first; document and exercise any peer-range exception.</li>
+    <li>Canary with observability for server errors, latency, cache hit rate, and user-specific response isolation.</li>
+  </ol>
+  <p>Keep a record of routes not exercised and assumptions that remain unresolved. Static build success, codemod completion, and green unit tests are useful checks, but they are not evidence that the new build preserves production behavior. Neukee is intended to identify several classes of upgrade risk before review—synchronous API patterns, runtime drift, and dependency conflicts. The final decision still depends on tests and deployment evidence that match how your Next.js application is used.</p>
+</GuideLayout>

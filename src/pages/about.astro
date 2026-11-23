@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'The engineering principles behind Neukee: show the evidence, respect the repository boundary, and keep migration decisions with the people who ship the system.';
+---
+
+<BaseLayout title="About Neukee | Engineering tools for teams that ship" {description} canonicalPath="/about/">
+  <section class="relative isolate overflow-hidden border-b border-white/10 px-5 py-20 sm:py-28 lg:py-36" data-reveal>
+    <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_75%_30%,rgba(124,58,237,.18),transparent_44%),linear-gradient(135deg,#08070b,#100c16)]"></div>
+    <div class="mx-auto max-w-7xl">
+      <p class="eyebrow">The point of the tool</p>
+      <h1 class="mt-6 max-w-5xl text-5xl font-semibold leading-[.95] tracking-[-.055em] sm:text-7xl lg:text-8xl">Make engineering judgment easier to see.</h1>
+      <p class="mt-7 max-w-2xl text-lg leading-8 text-zinc-400">Neukee is being built around a practical problem: the code looks ready to upgrade, but the runtime, lockfile, deployment target, and behavior do not always agree.</p>
+      <a class="mt-8 inline-flex items-center gap-2 text-sm font-medium text-violet-300 hover:text-violet-200" href="/#ci-engine">See the evidence in a scan <span aria-hidden="true">↓</span></a>
+    </div>
+  </section>
+  <section class="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+    <div class="grid gap-4 md:grid-cols-2">
+      <article class="glass-surface rounded-xl p-7 sm:p-9" data-reveal>
+        <p class="eyebrow">01 / No theater</p><h2 class="mt-5 text-2xl font-semibold">Evidence over confident summaries.</h2>
+        <p class="mt-4 leading-7 text-zinc-400">A useful warning shows the repository path, the observed condition, and the reason it matters. It separates a verified mismatch from a heuristic and makes uncertainty visible. A polished dashboard cannot replace that chain of reasoning.</p>
+      </article>
+      <article class="glass-surface rounded-xl p-7 sm:p-9" data-reveal>
+        <p class="eyebrow">02 / Respect the boundary</p><h2 class="mt-5 text-2xl font-semibold">Inspect first. Execute only by choice.</h2>
+        <p class="mt-4 leading-7 text-zinc-400">Pull requests can contain untrusted code. Static analysis should not surprise a team by invoking a package hook or sending source outside the runner. Build and test jobs remain a separate decision with their own sandbox and least-privilege controls.</p>
+      </article>
+      <article class="glass-surface rounded-xl p-7 sm:p-9" data-reveal>
+        <p class="eyebrow">03 / Own the change</p><h2 class="mt-5 text-2xl font-semibold">The repository and the decision stay yours.</h2>
+        <p class="mt-4 leading-7 text-zinc-400">A scan is a tool for the team doing the work, not a gate that quietly removes human review. Reports should be portable, suppression rules should be reviewable, and a release should have a named owner and rollback plan.</p>
+      </article>
+      <article class="glass-surface rounded-xl p-7 sm:p-9" data-reveal>
+        <p class="eyebrow">04 / Make it practical</p><h2 class="mt-5 text-2xl font-semibold">Meet a team where its CI already runs.</h2>
+        <p class="mt-4 leading-7 text-zinc-400">Open-source checks, static output, and a small set of explicit integrations are more useful than asking a team to move its source, release process, or security boundary into a new hosted system.</p>
+      </article>
+    </div>
+  </section>
+  <section class="border-y border-white/10 bg-[#0d0b12]" data-reveal>
+    <div class="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-8 lg:py-20">
+      <div><p class="eyebrow">Open development</p><h2 class="mt-4 text-3xl font-semibold">Built in the open, improved with real constraints.</h2></div>
+      <div><p class="leading-7 text-zinc-400">The project is still evolving. We would rather state a boundary than turn a roadmap item into a promise. If you have an upgrade with a real failure mode, send the target versions and a sanitized description—never credentials or private source—to <a class="text-violet-300 hover:text-violet-200" href="mailto:venuuu.nyc@proton.me">venuuu.nyc@proton.me</a>.</p><div class="mt-6 flex flex-wrap gap-3"><a class="rounded-md border border-white/15 px-4 py-2.5 text-sm text-zinc-200 hover:border-violet-300/40" href="https://github.com/neukee/neukee" target="_blank" rel="noreferrer">Explore the repository ↗</a><a class="rounded-md border border-white/15 px-4 py-2.5 text-sm text-zinc-200 hover:border-violet-300/40" href="/trust/">Read the trust center</a></div></div>
+    </div>
+  </section>
+</BaseLayout>

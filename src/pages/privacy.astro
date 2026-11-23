@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const description = 'Privacy notice explaining what the static Neukee website processes, how its email links and Google Fonts work, and how to ask a privacy question.';
+---
+
+<BaseLayout title="Privacy Notice | Neukee" {description} canonicalPath="/privacy/">
+  <section class="border-b border-white/10 bg-[#0d0b12] px-5 py-16 sm:py-20" data-reveal>
+    <div class="mx-auto max-w-7xl"><p class="eyebrow">What happens to information</p><h1 class="mt-4 text-5xl font-semibold tracking-tight sm:text-6xl">Privacy notice</h1><p class="mt-5 max-w-2xl text-sm text-zinc-500">Last updated: November 23, 2026 · Applies to the public Neukee website.</p></div>
+  </section>
+  <article class="prose-technical mx-auto max-w-4xl px-5 py-10 lg:px-8 lg:py-16" data-reveal>
+    <p>This notice explains the data flows created by visiting <code>neukee.github.io</code>. The website is statically generated. It has no Neukee account system, form-submission API, advertising pixels, or analytics script configured in this repository.</p>
+    <h2 id="host">1. Website hosting and connection data</h2>
+    <p>The Site is hosted through GitHub Pages. When your browser requests a page or asset, the hosting provider and network operators may process connection data such as IP address, user-agent, requested URL, timestamps, and security or diagnostic information. Their handling is governed by their own policies, including <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noreferrer">GitHub’s Privacy Statement</a>. Neukee does not receive a form submission merely because you visit the Site.</p>
+    <h2 id="fonts">2. Web fonts</h2>
+    <p>The Site requests Inter, Space Grotesk, and JetBrains Mono from Google Fonts. Your browser connects to Google’s font service to retrieve font styles or files; Google may receive network and browser information as part of that request. If your organization blocks third-party font services, the page falls back to system fonts. The Site does not send form values or repository content to Google Fonts.</p>
+    <h2 id="forms">3. Forms and email</h2>
+    <p>Contact and fleet-audit forms validate values in your browser and open a prefilled <code>mailto:</code> message addressed to <a href="mailto:venuuu.nyc@proton.me">venuuu.nyc@proton.me</a>. No HTTP form submission is made to a Neukee server. The message is not sent until you review and send it in your email application. If you send an email, its contents and metadata are processed by your email provider and the recipient’s mail provider. Do not include passwords, private keys, production secrets, customer data, or confidential repository content unless you have an appropriate secure channel and authorization.</p>
+    <h2 id="cookies">4. Cookies, local storage, and analytics</h2>
+    <p>The source currently includes no analytics product, advertising tracker, account cookie, or persistent browser storage. Browser features such as the email application and clipboard operate locally when you activate them. The hosting provider or third-party destinations may use their own technologies under their own policies.</p>
+    <h2 id="retention">5. Retention and deletion</h2>
+    <p>The static website has no Neukee form database from which to retrieve or delete a form submission. Messages you choose to send are handled through email and may remain in sender or recipient mailboxes and backups. For a privacy request about an email sent to Neukee, contact <a href="mailto:venuuu.nyc@proton.me?subject=Privacy%20request">venuuu.nyc@proton.me</a> and identify the message and request without resending sensitive data.</p>
+    <h2 id="children">6. Children and international visitors</h2>
+    <p>The Site is intended for software teams and professional use, not for children. The website operator’s legal identity and jurisdiction are not specified on this Site. If you have rights under a privacy law that applies to you, contact us and we will review the request; this notice does not limit mandatory legal rights.</p>
+    <h2 id="updates">7. Changes and questions</h2>
+    <p>This notice may change if the Site adds analytics, hosting services, or backend features. The “Last updated” date will be revised when material changes are published. Privacy questions can be sent to <a href="mailto:venuuu.nyc@proton.me?subject=Privacy%20question">venuuu.nyc@proton.me</a>.</p>
+  </article>
+</BaseLayout>
