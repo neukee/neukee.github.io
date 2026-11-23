@@ -5,7 +5,7 @@ const description = 'Straight answers about Neukee’s repository scans, CI veri
 const questions = [
   {
     question: 'What does Neukee check before an upgrade?',
-    answer: 'The scanner is designed to compare runtime declarations, deployment configuration, dependency lockfiles, and source patterns against a chosen Node.js or framework target. Its report should make findings reviewable, cite relevant upstream guidance, and call out what it could not assess.',
+    answer: 'Version 0.1.0, planned for December 8, 2026, checks three things: Node.js runtime drift (.nvmrc, .node-version, engines, Volta, Dockerfiles and GitHub Actions), dependencies that build native code at install time (npm and pnpm lockfiles), and Next.js 16 changes in your code and config. Every finding has a severity, a file, line and column, a suggested fix and a link to the official release note. Files it cannot parse are reported as diagnostics rather than skipped silently.',
   },
   {
     question: 'Does a scan upload my source code?',
@@ -17,19 +17,19 @@ const questions = [
   },
   {
     question: 'Which migration targets are covered?',
-    answer: 'The current content focuses on Node.js 22 to supported Node.js lines, the Node 22 to 26 compatibility boundary, and Next.js 15 to 16. Confirm the exact source and target versions in the tool’s release notes before making a production plan.',
+    answer: 'Version 0.1.0 targets Next.js 16 and Node.js 24. Node.js 24 and 26 code-level rules, Yarn lockfiles and deployment platform config follow in the first weeks after launch. The README on GitHub always lists what is built and what is planned.',
   },
   {
     question: 'Can Neukee prove an upgrade is safe?',
     answer: 'No single static scan, test suite, or behavioral diff can prove that every production path is safe. Neukee is meant to surface concrete risks and evidence; teams still need environment-specific tests, staged rollout, monitoring, and an owned rollback plan.',
   },
   {
-    question: 'How does the behavioral comparison work?',
-    answer: 'A configured CI harness can compare selected candidate behavior with an immutable baseline: HTTP responses, selected outbound request metadata, and database row deltas. Use synthetic data, isolate the test services, and keep the compared scenarios and normalization rules visible to reviewers.',
+    question: 'Does Neukee compare behavior before and after an upgrade?',
+    answer: 'Not in version 0.1.0, which is a static scanner. Behavioral verification is planned and is being built with design partners: it will run your own tests on the old and new versions inside your CI and show every difference for your team to review. It is not available today.',
   },
   {
-    question: 'Is the fleet audit really free?',
-    answer: 'The site offers a free 15-minute readiness conversation and a request path for a written audit blueprint. Availability and scope are confirmed directly; sending the form opens an email draft and does not transmit information until you choose to send it.',
+    question: 'Is the upgrade audit free?',
+    answer: 'The 15-minute readiness call is free. Founding upgrade audits are a paid, written report that starts after version 0.1.0 ships; scope and price are confirmed by email before any work. Sending the form only opens an email draft in your own mail app.',
   },
   {
     question: 'What happens when I submit a form?',
@@ -53,7 +53,7 @@ const jsonLd = {
 ---
 
 <BaseLayout title="FAQ | Neukee" {description} canonicalPath="/faq/" {jsonLd}>
-  <section class="relative overflow-hidden border-b border-white/10 bg-[#0c0912] px-5 py-20 sm:py-28" data-reveal>
+  <section class="relative overflow-hidden border-b border-white/10 bg-[#0c0c0c] px-5 py-20 sm:py-28" data-reveal>
     <div class="absolute inset-0 dot-field opacity-30 [mask-image:linear-gradient(to_right,transparent,black,transparent)]" aria-hidden="true"></div>
     <div class="relative mx-auto max-w-5xl">
       <p class="eyebrow">Good questions deserve direct answers</p>
