@@ -190,12 +190,24 @@ const schema = {
   .dot-field { background-image: radial-gradient(rgba(212,212,212,.23) .8px, transparent .8px); background-size: 24px 24px; }
   ::view-transition-old(root) { animation: page-out .24s cubic-bezier(.7,0,.84,0) both; }
   ::view-transition-new(root) { animation: page-in .48s cubic-bezier(.2,.8,.2,1) both; }
-  @keyframes page-in { from { opacity: 0; transform: translateX(26px); filter: hue-rotate(-35deg) saturate(.75); } to { opacity: 1; transform: translateX(0); filter: hue-rotate(0) saturate(1); } }
-  @keyframes page-out { to { opacity: 0; transform: translateX(-18px); filter: hue-rotate(35deg) saturate(1.15); } }
+  /* Opacity and movement only: a colour filter does nothing to a black-and-white page but makes the
+     browser filter a full-page snapshot on every frame of the transition. */
+  @keyframes page-in { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes page-out { to { opacity: 0; transform: translateX(-18px); } }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto !important; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+  }
+  /* Phones and tablets: frosted glass re-blurs the moving background behind every card on every
+     frame, one of the largest costs on a mid-range phone. Solid dark surfaces with the same base look the
+     same at this size and cost nothing. Desktops keep the glass. */
+  @media (hover: none), (max-width: 767px) {
+    *, *::before, *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+    /* Each surface keeps its own gradient; the opaque base is the page colour the blur used to show. */
+    .glass-surface, .bg-surface, .footer-panel { background-color: #0b0b0b; }
+    main :is(section, article, div)[class*="bg-[#"] { background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(18,18,18,.72) 58%, rgba(163,163,163,.045)), #0a0a0a !important; }
+    .smart-navbar nav { background-color: rgba(18,18,18,.96); }
   }
   .prose-technical h2 { margin-top: 3rem; scroll-margin-top: 6rem; font-size: 1.7rem; font-weight: 650; letter-spacing: -.025em; color: #fafafa; }
   .prose-technical h3 { margin-top: 2rem; font-size: 1.2rem; font-weight: 600; color: #e4e4e7; }

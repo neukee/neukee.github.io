@@ -10,13 +10,6 @@
       <span>NEXT.JS 16 <b>•</b> NO NETWORK <b>•</b> DETERMINISTIC <b>•</b> NODE 24 <b>•</b>&nbsp;</span>
     </div>
   </div>
-  <svg class="film-grain" xmlns="http://www.w3.org/2000/svg">
-    <filter id="neukee-grain">
-      <feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" stitchTiles="stitch" />
-      <feColorMatrix type="saturate" values="0" />
-    </filter>
-    <rect width="100%" height="100%" filter="url(#neukee-grain)" opacity=".15" />
-  </svg>
 </div>
 
 <script>
@@ -30,11 +23,23 @@
   let deviceScale = 1;
   const pointer = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Touch screens have no cursor to follow, so the mesh drifts at 30 fps there: half the work, and
+  // the drift is slow enough that nobody sees the difference.
+  const touchOnly = window.matchMedia('(hover: none)');
+  // Mobile browsers change the viewport height as the address bar shows and hides. The canvas is
+  // drawn this much taller so those resizes don't reallocate it or reseed the mesh mid-scroll.
+  const HEIGHT_HEADROOM = 160;
+  let lastDraw = 0;
+  let scrolling = false;
+  let scrollTimer = 0;
 
   function resizeMesh() {
     if (!meshCanvas || !meshContext) return;
-    viewportWidth = window.innerWidth;
-    viewportHeight = window.innerHeight;
+    const width = window.innerWidth;
+    const height = window.innerHeight + HEIGHT_HEADROOM;
+    if (meshPoints.length > 0 && width === viewportWidth && Math.abs(height - viewportHeight) <= HEIGHT_HEADROOM) return;
+    viewportWidth = width;
+    viewportHeight = height;
     deviceScale = Math.min(window.devicePixelRatio || 1, 1.5);
     meshCanvas.width = Math.round(viewportWidth * deviceScale);
     meshCanvas.height = Math.round(viewportHeight * deviceScale);
@@ -105,10 +110,24 @@
         context.stroke();
       }
     }
+  }
 
-    if (animate && !prefersReducedMotion.matches && document.visibilityState === 'visible') {
-      meshFrame = window.requestAnimationFrame((nextTime) => drawMesh(nextTime, true));
+  function canAnimate() {
+    return !prefersReducedMotion.matches && document.visibilityState === 'visible' && !scrolling;
+  }
+
+  function tick(time: number) {
+    meshFrame = 0;
+    if (!canAnimate()) return;
+    if (!touchOnly.matches || time - lastDraw >= 32) {
+      drawMesh(time, true);
+      lastDraw = time;
     }
+    meshFrame = window.requestAnimationFrame(tick);
+  }
+
+  function resume() {
+    if (meshFrame === 0 && canAnimate()) meshFrame = window.requestAnimationFrame(tick);
   }
 
   function startMesh() {
@@ -116,11 +135,24 @@
     meshContext = meshCanvas?.getContext('2d', { alpha: true }) ?? null;
     if (!meshCanvas || !meshContext) return;
     window.cancelAnimationFrame(meshFrame);
+    meshFrame = 0;
+    meshPoints = [];
     resizeMesh();
-    if (!prefersReducedMotion.matches) meshFrame = window.requestAnimationFrame((time) => drawMesh(time, true));
+    resume();
   }
 
   window.addEventListener('resize', resizeMesh, { passive: true });
+  // The mesh sits still while the page scrolls, so scrolling never competes with it for frames.
+  window.addEventListener('scroll', () => {
+    scrolling = true;
+    window.cancelAnimationFrame(meshFrame);
+    meshFrame = 0;
+    window.clearTimeout(scrollTimer);
+    scrollTimer = window.setTimeout(() => {
+      scrolling = false;
+      resume();
+    }, 180);
+  }, { passive: true });
   window.addEventListener('pointermove', (event) => {
     pointer.targetX = event.clientX;
     pointer.targetY = event.clientY;
@@ -137,8 +169,10 @@
     pointer.targetY = -1000;
   }, { passive: true });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') window.cancelAnimationFrame(meshFrame);
-    else startMesh();
+    if (document.visibilityState === 'hidden') {
+      window.cancelAnimationFrame(meshFrame);
+      meshFrame = 0;
+    } else startMesh();
   });
   prefersReducedMotion.addEventListener('change', startMesh);
   startMesh();
@@ -146,17 +180,19 @@
 </script>
 
 <style>
-  .living-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #0a0a0a; }
+  .living-backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #0a0a0a; contain: strict; }
   .dependency-mesh { position: absolute; inset: 0; opacity: .8; }
-  .aurora-ribbon { position: absolute; width: 65vw; height: 55vh; border-radius: 50%; filter: blur(110px) saturate(160%); opacity: .16; mix-blend-mode: screen; animation: aurora-drift 23s ease-in-out infinite alternate; }
-  .aurora-ribbon-one { top: -24vh; left: -12vw; background: radial-gradient(ellipse, rgba(163,163,163,.52), rgba(163,163,163,0) 68%); }
-  .aurora-ribbon-two { right: -24vw; bottom: -34vh; background: radial-gradient(ellipse, rgba(163,163,163,.7), rgba(250,250,250,0) 70%); animation-duration: 29s; animation-direction: alternate-reverse; }
+  /* The glows are soft gradients the compositor only moves: no live blur and no blend mode, which
+     redrew a full-screen blur on every frame and made phones drop to about 20 fps. --spread stands
+     in for the old blur radius, so the glow covers the same area. */
+  .aurora-ribbon { --spread: 130px; position: absolute; width: calc(65vw + 2 * var(--spread)); height: calc(55vh + 2 * var(--spread)); opacity: .125; will-change: transform; animation: aurora-drift 23s ease-in-out infinite alternate; }
+  .aurora-ribbon-one { top: calc(-24vh - var(--spread)); left: calc(-12vw - var(--spread)); background: radial-gradient(closest-side, rgba(163,163,163,.5), rgba(163,163,163,.36) 30%, rgba(163,163,163,.16) 60%, rgba(163,163,163,.04) 82%, rgba(163,163,163,0)); }
+  .aurora-ribbon-two { right: calc(-24vw - var(--spread)); bottom: calc(-34vh - var(--spread)); background: radial-gradient(closest-side, rgba(163,163,163,.66), rgba(163,163,163,.48) 30%, rgba(163,163,163,.21) 60%, rgba(163,163,163,.05) 82%, rgba(163,163,163,0)); animation-duration: 29s; animation-direction: alternate-reverse; }
   .living-type { position: absolute; top: 50%; left: 0; width: 100%; overflow: hidden; transform: translateY(-50%); color: rgba(240,240,240,.03); font-family: var(--font-display), sans-serif; font-size: clamp(3.5rem, 11vw, 11rem); font-weight: 700; letter-spacing: -.07em; line-height: .85; white-space: nowrap; }
   .living-type-track { display: flex; width: max-content; animation: living-type-loop 220s linear infinite; will-change: transform; }
   @keyframes living-type-loop { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
   .living-type b { color: rgba(212,212,212,.12); font-size: .5em; vertical-align: 18%; }
-  .film-grain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16; mix-blend-mode: soft-light; }
   @keyframes aurora-drift { from { transform: translate3d(-4vw,-2vh,0) rotate(-8deg) scale(1); } to { transform: translate3d(8vw,5vh,0) rotate(9deg) scale(1.13); } }
-  @media (max-width: 700px) { .aurora-ribbon { width: 110vw; height: 40vh; filter: blur(80px); opacity: .12; } .living-type { font-size: 18vw; } }
+  @media (max-width: 700px) { .aurora-ribbon { --spread: 95px; width: calc(110vw + 2 * var(--spread)); height: calc(40vh + 2 * var(--spread)); opacity: .095; } .living-type { font-size: 18vw; } }
   @media (prefers-reduced-motion: reduce) { .aurora-ribbon, .living-type-track { animation: none; transition: none; } }
 </style>
