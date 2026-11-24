@@ -3,7 +3,6 @@
 // and llms.txt, and show readers a short note. Remove a path once its claims are verified
 // and its sources are listed on the page.
 export const UNVERIFIED_PATHS = [
-  '/guides/nextjs-15-to-16-upgrade-guide/',
   '/guides/node-22-to-26-breaking-changes/',
   '/guides/node-22-eol-migration-checklist/',
   '/guides/verify-ai-agent-prs-in-ci/',

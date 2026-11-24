@@ -10,7 +10,7 @@ const pages = [
   ['/trust/', 'Trust', 'Project and operational trust information.'],
   ['/faq/', 'FAQ', 'Direct answers about scope, privacy and limitations.'],
   ['/guides/', 'Upgrade guides', 'Node.js and Next.js upgrade guides.'],
-  ['/guides/nextjs-15-to-16-upgrade-guide/', 'Next.js 15 to 16 upgrade guide', 'Async request APIs, caching and React peer dependencies.'],
+  ['/guides/nextjs-15-to-16-upgrade-guide/', 'Next.js 16 upgrade guide', 'Every breaking change from Next.js 15 to 16, checked against the official guide, with a search to find each one in your code.'],
   ['/guides/node-22-to-26-breaking-changes/', 'Node.js 22 to 26 breaking changes', 'Runtime, native-addon and CI considerations.'],
   ['/guides/node-22-eol-migration-checklist/', 'Node.js 22 end-of-life checklist', 'An operational checklist for the runtime change.'],
   ['/guides/verify-ai-agent-prs-in-ci/', 'Verifying AI-agent pull requests in CI', 'CI isolation and evidence for automated changes.'],

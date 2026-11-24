@@ -38,7 +38,7 @@ const description = 'Neukee is an open-source, local-first scanner that finds wh
         </div>
       </div>
       <div class="relative mx-auto w-full max-w-xl" data-reveal>
-        <div class="absolute -inset-8 rounded-full bg-violet-600/20 blur-[80px]" aria-hidden="true"></div>
+        <div class="hero-card-glow absolute -inset-48" aria-hidden="true"></div>
         <div class="glass-surface hero-float relative rounded-2xl p-4 sm:p-6">
           <div class="flex items-center justify-between border-b border-white/10 pb-4">
             <div class="flex items-center gap-3"><BrandMark class="h-8 w-auto text-zinc-100" /><div><p class="text-sm font-medium text-zinc-100">What version 0.1.0 flags</p><p class="font-mono text-[10px] text-zinc-500">illustration of two finding types</p></div></div>
@@ -206,6 +206,8 @@ const description = 'Neukee is an open-source, local-first scanner that finds wh
       radial-gradient(ellipse at 17% 8%, rgba(163,163,163, .08), transparent 40%),
       linear-gradient(135deg, #0a0a0a 12%, #0c0c0c 58%, #111111);
   }
+  /* A soft gradient in place of an 80px blur: same glow, drawn once instead of filtered live. */
+  .hero-card-glow { background: radial-gradient(closest-side, rgba(115,115,115,.2), rgba(115,115,115,.19) 30%, rgba(115,115,115,.15) 50%, rgba(115,115,115,.1) 62%, rgba(115,115,115,.055) 75%, rgba(115,115,115,.018) 88%, rgba(115,115,115,0)); pointer-events: none; }
   .hero-float { animation: hero-drift 9s ease-in-out infinite; }
   @keyframes hero-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
   @media (prefers-reduced-motion: reduce) { .hero-float { animation: none; } }

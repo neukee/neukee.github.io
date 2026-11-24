@@ -55,3 +55,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+      # Tell the IndexNow engines (Bing, Yandex, Naver, Seznam, Yep) which pages exist, so new
+      # and updated pages are recrawled quickly. Google does not use IndexNow; it reads the
+      # sitemap through Search Console. The key is public by design (public/<key>.txt).
+      - name: Notify IndexNow
+        continue-on-error: true
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+          INDEXNOW_KEY: e3d008140da4c4743f1297c5b13169a5
+        run: |
+          sleep 30
+          site="${SITE%/}"
+          host=$(printf '%s' "$site" | sed -E 's#^https?://([^/]+).*#\1#')
+          curl -fsSL "$site/sitemap-0.xml" | grep -o '<loc>[^<]*</loc>' | sed -E 's#</?loc>##g' > urls.txt
+          jq -n --arg host "$host" --arg key "$INDEXNOW_KEY" --arg loc "$site/$INDEXNOW_KEY.txt" \
+            --rawfile urls urls.txt '{host: $host, key: $key, keyLocation: $loc, urlList: ($urls | split("\n") | map(select(length > 0)))}' > indexnow.json
+          echo "Submitting $(wc -l < urls.txt) URLs for $host"
+          curl -sS -o /dev/null -w 'IndexNow responded %{http_code}\n' -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' --data @indexnow.json

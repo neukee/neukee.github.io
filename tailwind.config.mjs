@@ -9,6 +9,8 @@ export default {
         line: '#27272A',
         // Brand: monochrome. The violet and emerald scales are remapped to neutrals so
         // accent classes render in the Neukee black-and-white identity.
+        // Secondary text greys, lightened to meet WCAG AA contrast (4.5:1) on the near-black surfaces.
+        zinc: { 500: '#8E8E96', 600: '#7F7F88' },
         violet: {
           100: '#FAFAFA', 200: '#F0F0F0', 300: '#D4D4D4', 400: '#FAFAFA',
           500: '#E5E5E5', 600: '#737373',

@@ -1,102 +1,141 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
 
-const title = 'Next.js 15 to 16 Upgrade Guide: Async APIs, Caching, and React 19';
-const description = 'A production-minded Next.js 15 to 16 migration guide covering async request APIs, fetch and route-handler caching, React peer dependencies, and codemod gaps.';
+const title = 'Next.js 16 Upgrade Guide: Every Breaking Change and How to Find It in Your Code';
+const description =
+  'Upgrading from Next.js 15 to 16: Node.js 20.9, Turbopack by default, fully async request APIs, middleware renamed to proxy, next/image defaults, removed config and next lint. With a search for each change.';
 const path = '/guides/nextjs-15-to-16-upgrade-guide/';
+const sources = [
+  { title: 'Next.js: How to upgrade to version 16 (docs bundled with next 16.4.6)', url: 'https://nextjs.org/docs/app/guides/upgrading/version-16' },
+  { title: 'Next.js: Codemods', url: 'https://nextjs.org/docs/app/guides/upgrading/codemods' },
+  { title: 'Next.js: Upgrade with a coding agent', url: 'https://nextjs.org/docs/app/guides/upgrading/agent-upgrade' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path}>
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-24" {sources}>
   <Fragment slot="toc">
-    <a class="block hover:text-emerald-300" href="#before">Before the upgrade</a>
-    <a class="block hover:text-emerald-300" href="#async-apis">Async request APIs</a>
-    <a class="block hover:text-emerald-300" href="#caching">Caching semantics</a>
-    <a class="block hover:text-emerald-300" href="#react">React peer dependencies</a>
-    <a class="block hover:text-emerald-300" href="#codemods">What codemods miss</a>
-    <a class="block hover:text-emerald-300" href="#release">Verify before release</a>
+    <a class="block hover:text-violet-200" href="#before-you-start">Before you start</a>
+    <a class="block hover:text-violet-200" href="#runtime">Node.js and TypeScript</a>
+    <a class="block hover:text-violet-200" href="#turbopack">Turbopack by default</a>
+    <a class="block hover:text-violet-200" href="#async-apis">Async request APIs</a>
+    <a class="block hover:text-violet-200" href="#proxy">middleware becomes proxy</a>
+    <a class="block hover:text-violet-200" href="#images">next/image defaults</a>
+    <a class="block hover:text-violet-200" href="#caching">Caching APIs</a>
+    <a class="block hover:text-violet-200" href="#routes">Routes and build output</a>
+    <a class="block hover:text-violet-200" href="#removals">Removed APIs and config</a>
+    <a class="block hover:text-violet-200" href="#checklist">Checklist</a>
   </Fragment>
 
-  <p>A Next.js major upgrade is not finished when the compiler accepts the new version. Next.js 15 already moved request-specific APIs toward asynchronous access and changed caching defaults. Next.js 16 continues that direction and introduces additional changes that depend on the exact release and enabled features. Treat the migration as a behavior review across rendering, data fetching, routing, and dependency resolution—not just a mechanical codemod run.</p>
-  <p>Start by reading the official <a href="https://nextjs.org/docs/app/guides/upgrading/version-16" target="_blank" rel="noreferrer">Next.js 16 upgrade guide</a>, then lock the exact target version and review its release notes. Do not copy a setting from a different Next minor into production without checking whether the corresponding feature is enabled in your project. Keep the existing app router or pages router context explicit throughout the migration.</p>
+  <p>Next.js 16 finishes several changes that Next.js 15 started. Some fail loudly at build time, like a custom <code>webpack</code> config or a parallel route without <code>default.js</code>. Others are quiet: synchronous <code>cookies()</code> calls, image quality coerced to 75, a Docker image still on Node.js 18. This guide lists every breaking change in the official upgrade guide, explains it in a sentence or two, and gives a quick search to find it in your repository.</p>
+  <p>The searches use <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a> (<code>rg</code>). They are deliberately simple: they can match code that is fine and miss code that isn't, so treat each result as a place to look, not a verdict.</p>
 
-  <h2 id="before">Establish a baseline before changing dependencies</h2>
-  <p>Record the current Next.js, React, React DOM, Node, and package-manager versions from the lockfile and deployment build. Save representative outputs for dynamic pages, static pages, route handlers, redirects, cookies, and authenticated content. For production, include CDN and platform cache headers: the browser-visible behavior can differ from what a local development server suggests.</p>
-  <p>Identify all request-bound values. Search app routes for <code>cookies()</code>, <code>headers()</code>, route <code>params</code>, and page <code>searchParams</code>. Find where their values influence data fetching or rendered output. A route may have looked static while only one query parameter or cookie made it user-specific; changing how that value is awaited can reveal the actual dynamic boundary.</p>
-  <p>Run a clean install from the committed lockfile and save the complete dependency resolution. If the upgrade changes React’s peer range, avoid using a force flag as the first response. A peer conflict is a signal to understand which component library or test renderer is constraining the graph.</p>
+  <h2 id="before-you-start">Before you start</h2>
+  <p>The official guide now recommends letting a coding agent run the upgrade with <code>npx next@canary upgrade --agent=latest</code>, which prepares the migration guides and the codemod for the agent and asks it to verify the app. The manual path is the <code>upgrade</code> codemod:</p>
+  <pre><code>npx @next/codemod@canary upgrade latest</code></pre>
+  <p>Know what the codemod covers. It moves Turbopack config out of <code>experimental</code>, migrates <code>next lint</code> to the ESLint CLI, renames <code>middleware</code> to <code>proxy</code>, drops <code>unstable_</code> prefixes from stabilized APIs and removes <code>experimental_ppr</code> segment config. It does <strong>not</strong> migrate synchronous request APIs left over from the Next.js 15 compatibility period; that is a separate codemod (<code>next-async-request-api</code>). Either way, review the diff yourself: a codemod that finishes cleanly only means it ran.</p>
 
-  <h2 id="async-apis">Migrate request APIs to asynchronous access</h2>
-  <p>In the app router, request-specific APIs are asynchronous in current Next.js versions. Code that immediately reads a cookie or header must await the API. Dynamic route parameters and search parameters may also be promised depending on the route entry point and version. Update the function signature and the access site together; a codemod can transform common forms but may not understand wrappers, aliases, helper functions, or generated types throughout a repository.</p>
-  <pre is:raw><code>// Before
-import { cookies, headers } from 'next/headers';
+  <h2 id="runtime">Node.js and TypeScript requirements</h2>
+  <p>Next.js 16 needs Node.js 20.9 or later (Node.js 18 is no longer supported) and TypeScript 5.1 or later. Supported browsers are Chrome, Edge and Firefox 111+ and Safari 16.4+.</p>
+  <p>The version in your <code>package.json</code> is rarely the only one that matters. Check every place a Node.js version is declared, because production runs whichever one the deploy path picks:</p>
+  <pre><code>cat .nvmrc .node-version 2&gt;/dev/null
+rg -n '"node"' package.json
+rg -n '^FROM\s+node' -g 'Dockerfile*'
+rg -n 'node-version' .github/workflows</code></pre>
 
-export default function AccountPage() {
-  const session = cookies().get('session');
-  const requestId = headers().get('x-request-id');
-  return &lt;Account session={session?.value} requestId={requestId} /&gt;;
-}
+  <h2 id="turbopack">Turbopack is the default bundler</h2>
+  <p><code>next dev</code> and <code>next build</code> now use Turbopack without any flag, so <code>--turbopack</code> and <code>--turbo</code> in your scripts can go. If the project has a custom <code>webpack</code> config, <code>next build</code> now <strong>fails</strong> on purpose. You can build with Turbopack and ignore the webpack config (<code>next build --turbopack</code>), migrate the config to Turbopack options, or keep webpack with <code>next build --webpack</code>. A webpack config you didn't write can come from a plugin.</p>
+  <p>Two related changes: <code>experimental.turbopack</code> moves to a top-level <code>turbopack</code> option, and Sass imports from <code>node_modules</code> can't use the legacy <code>~</code> prefix under Turbopack.</p>
+  <pre><code>rg -n 'webpack' -g 'next.config.*'
+rg -n -- '--turbo(pack)?\b' package.json
+rg -n "@import\s+['\"]~" -g '*.scss' -g '*.sass'</code></pre>
 
-// After
-import { cookies, headers } from 'next/headers';
+  <h2 id="async-apis">Request APIs are async only</h2>
+  <p>Next.js 15 made these APIs asynchronous but kept temporary synchronous access. Next.js 16 removes that compatibility, so the following can only be awaited:</p>
+  <ul>
+    <li><code>cookies()</code>, <code>headers()</code> and <code>draftMode()</code></li>
+    <li><code>params</code> in layouts, pages, route handlers, <code>default.js</code> and the image metadata files</li>
+    <li><code>searchParams</code> in pages</li>
+  </ul>
+  <pre><code>// Next.js 16
+import &#123; cookies &#125; from 'next/headers';
 
-export default async function AccountPage() {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const session = cookieStore.get('session');
-  const requestId = headerStore.get('x-request-id');
-  return &lt;Account session={session?.value} requestId={requestId} /&gt;;
-}</code></pre>
-  <p>Do not add <code>async</code> mechanically to every component. Server components can be asynchronous where supported, but a client component cannot become an async server component by changing its declaration. If a client boundary needs request-derived data, fetch or resolve it in the server parent and pass only the necessary serializable value. Keep secrets server-side and avoid passing raw session tokens to browser code.</p>
-  <p>For dynamic routes, check the framework’s generated types and await params at the boundary. Then verify metadata generation, layouts, parallel routes, and route handlers, not only the page component. A reusable helper that used to accept a synchronous cookie store may need a typed promise or an explicit data object instead. Update tests so they exercise the request-bound code through the framework or a realistic adapter.</p>
-  <pre is:raw><code>// Example route page shape for async params
-type PageProps = {
-  params: Promise&lt;{ slug: string }&gt;;
-  searchParams: Promise&lt;{ preview?: string }&gt;;
-};
+export default async function Page() &#123;
+  const session = (await cookies()).get('session');
+  // ...
+&#125;</code></pre>
+  <p>The image-generating functions in <code>opengraph-image</code>, <code>twitter-image</code>, <code>icon</code> and <code>apple-icon</code> now receive <code>params</code> and <code>id</code> as promises, and the <code>sitemap</code> function receives its <code>id</code> as a promise. <code>generateImageMetadata</code> still gets synchronous <code>params</code>. For types, <code>npx next typegen</code> generates <code>PageProps</code>, <code>LayoutProps</code> and <code>RouteContext</code> helpers.</p>
+  <pre><code>rg -n '\b(cookies|headers|draftMode)\(\)\s*\.' app src
+rg -n 'params\.\w+|searchParams\.\w+' app src
+rg -n 'UnsafeUnwrapped' app src</code></pre>
+  <p>The last search finds casts the async codemod leaves behind when it can't migrate a call safely; each one is unfinished work.</p>
 
-export default async function ArticlePage({ params, searchParams }: PageProps) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
-  return &lt;Article slug={slug} preview={query.preview === '1'} /&gt;;
-}</code></pre>
-  <p>Use the exact prop shape generated or documented by your installed Next.js version. Framework type helpers and generated route definitions can evolve, so compare the compiled result with the version-specific documentation rather than assuming this illustrative signature is universal.</p>
+  <h2 id="proxy"><code>middleware</code> becomes <code>proxy</code></h2>
+  <p>The <code>middleware</code> file name and the <code>middleware</code> named export are deprecated in favor of <code>proxy</code> (<code>proxy.ts</code>, <code>export function proxy</code>). Config flags follow, for example <code>skipMiddlewareUrlNormalize</code> becomes <code>skipProxyUrlNormalize</code>.</p>
+  <p>One catch matters more than the rename: <code>proxy</code> always runs on the Node.js runtime and can't use <code>edge</code>. If your middleware relies on the edge runtime, keep it as <code>middleware</code> for now rather than renaming it blindly.</p>
+  <pre><code>ls middleware.* src/middleware.* 2&gt;/dev/null
+rg -n "runtime\s*[:=]\s*['\"]edge" -g 'middleware.*'
+rg -n 'skipMiddlewareUrlNormalize' -g 'next.config.*'</code></pre>
 
-  <h2 id="caching">Recheck fetch and route-handler caching</h2>
-  <p>Next.js 15 changed the default caching behavior for <code>fetch</code> and GET route handlers; requests that previously appeared cached by default may now be dynamic unless caching is explicitly selected. That distinction can affect both correctness and cost. An endpoint returning public catalog data may lose a beneficial cache, while a response containing account-specific information must not be shared across users.</p>
-  <p>Make cache intent visible at the call site and verify each relevant API against the target version. For data that is safe to reuse, use the framework-supported caching mechanism and define a revalidation policy. For data that depends on a cookie, authorization header, or user identity, ensure it remains private and is not placed in a shared cache. Route handler caching is separate from application-level caches, CDN behavior, and browser caching; inspect all layers.</p>
-  <pre is:raw><code>// Before: implicit caching assumptions
-export async function GET() {
-  const inventory = await fetch('https://catalog.internal/items');
-  return Response.json(await inventory.json());
-}
+  <h2 id="images"><code>next/image</code> defaults and restrictions</h2>
+  <p>Six changes, most of them silent:</p>
+  <ul>
+    <li><strong>Query strings on local images</strong> now need <code>images.localPatterns.search</code>, to prevent enumeration attacks.</li>
+    <li><strong><code>minimumCacheTTL</code></strong> goes from 60 seconds to 4 hours. Images whose source doesn't send <code>cache-control</code> refresh far less often.</li>
+    <li><strong><code>imageSizes</code></strong> no longer includes 16.</li>
+    <li><strong><code>qualities</code></strong> defaults to <code>[75]</code>. A <code>quality</code> prop outside the list is coerced to the nearest allowed value, and direct <code>/_next/image</code> requests with an unsupported <code>q</code> return 400.</li>
+    <li><strong>Local IP optimization</strong> is blocked by default (<code>images.dangerouslyAllowLocalIP</code> opts back in; understand the SSRF risk first).</li>
+    <li><strong><code>maximumRedirects</code></strong> goes from unlimited to 3.</li>
+  </ul>
+  <p><code>next/legacy/image</code> and <code>images.domains</code> are deprecated; use <code>next/image</code> and <code>images.remotePatterns</code>.</p>
+  <pre><code>rg -n 'quality=' app src components
+rg -n "src=['\"]/[^'\"]*\?" app src components
+rg -n 'minimumCacheTTL|qualities|imageSizes|domains' -g 'next.config.*'
+rg -n 'next/legacy/image' app src components</code></pre>
 
-// After: explicit revalidation intent for public catalog data
-export async function GET() {
-  const inventory = await fetch('https://catalog.internal/items', {
-    next: { revalidate: 300 },
-  });
-  return Response.json(await inventory.json(), {
-    headers: { 'Cache-Control': 'public, max-age=0, s-maxage=300' },
-  });
-}</code></pre>
-  <p>The after example is appropriate only if the endpoint is genuinely public and the upstream data can be stale for five minutes. It does not replace checking route segment configuration, framework caching rules, or deployment-provider behavior. For authenticated endpoints, write an explicit test that requests as two distinct users and confirms that neither response leaks into the other’s cache. Also test invalidation after writes, not just the first GET.</p>
-  <p>For a migration diff, compare status, body, relevant response headers, cache tags, and revalidation timing between the old and new builds. A response body can be identical while its cache policy changes substantially. A low-level test that stubs <code>fetch</code> will not reveal a CDN that begins caching a private response.</p>
+  <h2 id="caching">Caching APIs</h2>
+  <p><code>revalidateTag</code> now takes a second argument, a <code>cacheLife</code> profile such as <code>'max'</code>; the one-argument form is deprecated and fails type-checking. For read-your-writes updates in Server Actions there is a new <code>updateTag</code>, and <code>refresh</code> refreshes the client router from a Server Action. <code>cacheLife</code> and <code>cacheTag</code> are stable, so their <code>unstable_</code> import aliases can go.</p>
+  <pre><code>rg -n "revalidateTag\(\s*['\"][^'\"]+['\"]\s*\)" app src
+rg -n 'unstable_(cacheLife|cacheTag)' app src</code></pre>
 
-  <h2 id="react">Resolve React 19 peer dependencies deliberately</h2>
-  <p>Check the React and React DOM versions required by the exact Next.js target and compare them with the peer ranges of component libraries, design systems, test utilities, and custom renderers. A clean package-manager resolution does not prove that the combination works at runtime. Conversely, an older peer range does not always prove incompatibility; examine the package’s release notes and test the integration rather than suppressing the warning without review.</p>
-  <p>Upgrade or replace unsupported packages in isolated steps where possible. If a dependency intentionally supports a broader range but has stale metadata, document that reasoning, run its interaction tests, and track the issue upstream. Avoid mixing a Next major upgrade with a wholesale component library redesign, which makes regressions much harder to attribute.</p>
+  <h2 id="routes">Routes, scrolling and build output</h2>
+  <ul>
+    <li><strong>Parallel routes</strong>: every slot (<code>@folder</code>) needs an explicit <code>default.js</code>, or the build fails. One that calls <code>notFound()</code> or returns <code>null</code> keeps the old behavior.</li>
+    <li><strong>Scroll behavior</strong>: Next.js no longer overrides a global <code>scroll-behavior: smooth</code> during navigation. Add <code>data-scroll-behavior="smooth"</code> to <code>&lt;html&gt;</code> to keep the old override.</li>
+    <li><strong>Dev and build output</strong>: <code>next dev</code> writes to <code>.next/dev</code> and a lockfile stops two dev or build processes on one project.</li>
+    <li><strong>Build output</strong>: the <code>size</code> and <code>First Load JS</code> columns are gone from <code>next build</code>. Measure with Lighthouse or field Core Web Vitals instead.</li>
+    <li><strong>Config loading</strong>: in <code>next dev</code>, <code>process.argv</code> no longer includes <code>'dev'</code> inside your Next config; use <code>NODE_ENV</code> or the config <code>phase</code>.</li>
+  </ul>
+  <pre><code>find app -type d -name '@*' -exec sh -c 'ls "$1"/default.* &gt;/dev/null 2&gt;&amp;1 || echo "missing default: $1"' _ &#123;&#125; \;
+rg -n "process\.argv" -g 'next.config.*'</code></pre>
 
-  <h2 id="codemods">What @next/codemod does not establish</h2>
-  <p>The official codemods are useful accelerators. They can update recognized syntax patterns, but they cannot infer whether a cache is safe for customer data, whether a component truly belongs on the server, or whether your third-party API uses a compatible React peer range. They may not follow aliases, dynamic wrappers, generated files, or repository-specific abstractions. A codemod finishing without errors means the transformation ran, not that every required migration is complete.</p>
-  <p>Review the diff, search again for synchronous request API usage, run type checking, and inspect warnings from a production build. Examine changed imports, route exports, metadata functions, and tests. Do not accept changes to generated or vendored files without understanding whether they should be regenerated or excluded.</p>
-  <p>Then exercise routes by behavior: anonymous versus authenticated, fresh versus cached data, valid versus invalid search parameters, and a mutation followed by a read. Include deployment-specific headers and an integration check against a representative database or service. For pages with server actions, verify authorization and cache invalidation after the action completes.</p>
+  <h2 id="removals">Removed APIs and config</h2>
+  <ul>
+    <li><strong>AMP</strong>: all AMP APIs and config are gone (<code>amp</code> config, <code>next/amp</code>, <code>useAmp</code>, <code>config = &#123; amp: true &#125;</code>).</li>
+    <li><strong><code>next lint</code></strong> is removed and <code>next build</code> no longer lints. Run ESLint or Biome directly; the <code>eslint</code> option in the Next config is removed too. <code>@next/eslint-plugin-next</code> now defaults to ESLint flat config.</li>
+    <li><strong>Runtime config</strong>: <code>serverRuntimeConfig</code> and <code>publicRuntimeConfig</code> are removed. Use environment variables, with <code>NEXT_PUBLIC_</code> for values the browser needs.</li>
+    <li><strong><code>devIndicators</code></strong> loses <code>appIsrStatus</code>, <code>buildActivity</code> and <code>buildActivityPosition</code>.</li>
+    <li><strong>PPR and Cache Components</strong>: the experimental PPR flag and <code>experimental_ppr</code> segment config are removed, as are <code>experimental.dynamicIO</code> and <code>experimental.useCache</code>. PPR now comes through <code>cacheComponents</code>, which is a new model rather than a rename: enabling it can surface build errors for uncached data outside <code>&lt;Suspense&gt;</code>. If you weren't using these flags, delete them.</li>
+    <li><strong><code>unstable_rootParams</code></strong> is removed in favor of <code>next/root-params</code>.</li>
+    <li><strong>Later 16.x minors</strong> remove more flags: <code>experimental.viewTransition</code> (16.3) and <code>experimental.appNewScrollHandler</code> (16.4).</li>
+  </ul>
+  <pre><code>rg -n 'next lint' package.json .github
+rg -n "next/amp|useAmp|amp:\s*true" app pages src
+rg -n 'serverRuntimeConfig|publicRuntimeConfig|dynamicIO|useCache|ppr|devIndicators|viewTransition|appNewScrollHandler' -g 'next.config.*'
+rg -n 'experimental_ppr|unstable_rootParams' app src</code></pre>
 
-  <h2 id="release">Verify the target build like a user will encounter it</h2>
-  <ol>
-    <li>Pin exact Next.js, React, React DOM, and Node versions in the lockfile and deployment configuration.</li>
-    <li>Run the documented migration codemod, review its full diff, and search for remaining synchronous APIs.</li>
-    <li>Build in production mode and test every route class, including middleware, metadata, and route handlers.</li>
-    <li>Compare response bodies, status codes, headers, cache behavior, and persisted effects against the baseline.</li>
-    <li>Test the dependency graph without force flags first; document and exercise any peer-range exception.</li>
-    <li>Canary with observability for server errors, latency, cache hit rate, and user-specific response isolation.</li>
-  </ol>
-  <p>Keep a record of routes not exercised and assumptions that remain unresolved. Static build success, codemod completion, and green unit tests are useful checks, but they are not evidence that the new build preserves production behavior. Neukee is intended to identify several classes of upgrade risk before review—synchronous API patterns, runtime drift, and dependency conflicts. The final decision still depends on tests and deployment evidence that match how your Next.js application is used.</p>
+  <h2 id="checklist">Checklist before you merge</h2>
+  <ul>
+    <li>Every Node.js version source (version files, <code>engines</code>, Dockerfiles, CI, the host) is on 20.9 or later.</li>
+    <li>Build scripts match the bundler you actually use, including plugins that add a webpack config.</li>
+    <li>No synchronous <code>cookies()</code>, <code>headers()</code>, <code>draftMode()</code>, <code>params</code> or <code>searchParams</code> access remains, and no <code>UnsafeUnwrapped</code> casts.</li>
+    <li>Middleware that needs the edge runtime was not renamed to <code>proxy</code>.</li>
+    <li>Image requests still work under the new defaults, with the qualities you intend.</li>
+    <li><code>revalidateTag</code> calls pass a <code>cacheLife</code> profile.</li>
+    <li>Every parallel route slot has a <code>default.js</code>.</li>
+    <li>Nothing calls <code>next lint</code>, AMP, runtime config or removed flags.</li>
+    <li>The app's own checks pass and the affected routes behave the same. A green build alone doesn't prove that.</li>
+  </ul>
+
+  <h2 id="neukee">Where Neukee fits</h2>
+  <p>Neukee is an open-source, local-first scanner for these upgrades. Version 0.1.0, planned for December 8, 2026, is built to flag synchronous request APIs, middleware that must become proxy, custom webpack config, removed config keys, <code>next lint</code> scripts and parallel route slots without <code>default</code>, plus Node.js version drift across your repo, each linked to the official note it comes from. Follow it on <a href="https://github.com/neukee/neukee">GitHub</a>.</p>
 </GuideLayout>
