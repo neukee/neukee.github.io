@@ -6,7 +6,7 @@ import { ClientRouter } from 'astro:transitions';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/space-grotesk';
 import '@fontsource-variable/jetbrains-mono';
-import { CONTACT_EMAIL, PROFILES } from '../site';
+import { CONTACT_EMAIL, GOOGLE_SITE_VERIFICATION, PROFILES } from '../site';
 
 interface Props {
   title: string;
@@ -81,6 +81,7 @@ const schema = {
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, follow" />}
+    {GOOGLE_SITE_VERIFICATION && <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/brand/neukee-logo-512.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />

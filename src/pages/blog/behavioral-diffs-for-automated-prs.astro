@@ -4,9 +4,14 @@ import GuideLayout from '../../layouts/GuideLayout.astro';
 const title = 'Automated Pull Requests Need Behavioral Evidence';
 const description = 'A review workflow for dependency and AI-generated pull requests that combines unit tests with repeatable, isolated baseline-versus-candidate comparisons.';
 const path = '/blog/behavioral-diffs-for-automated-prs/';
+const sources = [
+  { title: 'GitHub Docs: Secure use reference (GitHub Actions)', url: 'https://docs.github.com/en/actions/reference/security/secure-use' },
+  { title: 'GitHub Docs: Securely using pull_request_target', url: 'https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target' },
+  { title: 'actions/checkout README (persist-credentials)', url: 'https://github.com/actions/checkout#readme' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23">
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-25" {sources}>
   <Fragment slot="toc">
     <a class="block hover:text-violet-200" href="#why-green-isnt-enough">Why green is not enough</a>
     <a class="block hover:text-violet-200" href="#baseline">Pin the baseline</a>
@@ -26,7 +31,8 @@ const path = '/blog/behavioral-diffs-for-automated-prs/';
   <p>For database behavior, use a disposable database seeded from synthetic fixtures. Compare the tables and rows changed by a scenario, not an unrestricted dump of the database. For outbound traffic, record a minimal allowlisted set of destinations and method/header names. Do not store authorization values or production request bodies in artifacts.</p>
   <p>A difference should explain itself: baseline and candidate SHAs, scenario name, input fixture, observed change, and replay command. An unchanged body with a different cache header may need review; a checkout route that inserts no row where the baseline inserted one likely blocks release. The report helps a reviewer decide; it should not silently declare every difference acceptable or unsafe.</p>
   <h2 id="isolation">Make safety part of the harness</h2>
-  <p>Pull requests can modify install scripts, test code, or workflow configuration. Give untrusted jobs read-only permissions, avoid persistent checkout credentials, use short-lived tokens, and run in disposable workers. Keep static scans in a no-egress job where practical and run integration tests against local ephemeral services. Never inject deployment credentials or production data merely to make the comparison more realistic.</p>
+  <p>Pull requests can modify install scripts, test code, or workflow configuration. Give untrusted jobs read-only permissions (GitHub recommends a read-only default for <code>GITHUB_TOKEN</code>), set <code>persist-credentials: false</code> on checkout, don't run a pull request's code from a <code>pull_request_target</code> workflow, use short-lived tokens, and run in disposable workers. Keep static scans in a no-egress job where practical and run integration tests against local ephemeral services. Never inject deployment credentials or production data merely to make the comparison more realistic.</p>
   <p>Noise control should be explicit. Fixed clocks, seeded randomness, stable fixtures, and repeated execution can reveal flaky comparisons. A second run can help identify noise, but should not erase a difference automatically. Keep suppressions narrow, reviewed, and visible in the report.</p>
   <p>Start in advisory mode with a small number of stable scenarios. Learn which differences are meaningful, track false positives and CI duration, and require the status only when the harness can distinguish a real failure from an unavailable environment. That creates a higher review bar without pretending automation has replaced engineering judgment.</p>
+  <p>The full method, with the GitHub Actions settings, is in the guide <a href="/guides/verify-ai-agent-prs-in-ci/">How to verify AI agent and Dependabot pull requests in CI</a>.</p>
 </GuideLayout>
