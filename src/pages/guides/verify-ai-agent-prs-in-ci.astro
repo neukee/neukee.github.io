@@ -1,12 +1,17 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
 
-const title = 'How to Verify AI-Agent Pull Requests in CI';
-const description = 'A practical method for checking dependency-bot and AI coding agent changes with repeatable baseline-versus-candidate behavior tests, not only mocked unit tests.';
+const title = 'How to Verify AI Agent and Dependabot Pull Requests in CI';
+const description = 'Checking pull requests from AI coding agents, Dependabot and Renovate in CI: baseline-versus-candidate behavior comparisons, noise control, and running untrusted code safely in GitHub Actions.';
 const path = '/guides/verify-ai-agent-prs-in-ci/';
+const sources = [
+  { title: 'GitHub Docs: Secure use reference (GitHub Actions)', url: 'https://docs.github.com/en/actions/reference/security/secure-use' },
+  { title: 'GitHub Docs: Securely using pull_request_target', url: 'https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target' },
+  { title: 'actions/checkout README (persist-credentials)', url: 'https://github.com/actions/checkout#readme' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path}>
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-25" {sources}>
   <Fragment slot="toc">
     <a class="block hover:text-emerald-300" href="#mock-gap">The mock gap</a>
     <a class="block hover:text-emerald-300" href="#baseline">Build a trustworthy baseline</a>
@@ -54,6 +59,18 @@ steps:
 
   <h2 id="security">Run untrusted pull requests with a real isolation boundary</h2>
   <p>Both dependency bots and coding agents can modify installation scripts, workflow files, and test configuration. Treat their branches as untrusted code. Do not expose write-capable deployment credentials to a job that runs arbitrary pull request code. Use short-lived, least-privilege tokens, disposable workers, and a policy that separates repository metadata scanning from build and test execution.</p>
+  <p>On GitHub Actions, the trigger decides what the job can reach. A <code>pull_request</code> workflow runs the pull request's own code, and for pull requests from forks GitHub gives it a read-only <code>GITHUB_TOKEN</code> and no other secrets. A <code>pull_request_target</code> workflow runs the base branch's workflow with a read/write token and secrets; GitHub's documentation calls checking out the pull request's head commit in that workflow insecure. So run the comparison under <code>pull_request</code>, and if something must post results with write access, do it in a separate job that never executes the pull request's code. GitHub also recommends setting the default <code>GITHUB_TOKEN</code> permission to read-only for repository contents and raising it only per job:</p>
+  <pre><code>permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@&lt;full commit SHA&gt;
+        with:
+          persist-credentials: false</code></pre>
+  <p><code>actions/checkout</code> keeps the token available to later git commands unless you set <code>persist-credentials: false</code>, so a job that runs untrusted code should set it.</p>
   <p>Where possible, keep static analysis in a no-egress job and run integration tests in a separate sandbox with only the local services they need. Clear credentials from the environment, disable persistent checkout credentials, and avoid reusing workspaces between pull requests. Protect the workflow definition and baseline settings with <code>CODEOWNERS</code> and required branch checks; otherwise a candidate may weaken its own verification path.</p>
   <p>Artifacts deserve the same care as source. Retain the minimum request and database data required for review, redact sensitive fields before upload, and define a retention period. A behavioral recorder can accidentally collect personal information or secrets if it captures every request body by default. Start with an allowlist of scenarios and fields, then expand only when there is a specific review need.</p>
 
@@ -61,5 +78,5 @@ steps:
   <p>Start with one high-value service and a small set of stable scenarios. Run the new comparison in advisory mode while engineers inspect false positives and improve the harness. Establish which differences should block merge, which require an acknowledgment, and which are informational. Only promote a required status after the system can distinguish an unavailable test environment from a real behavioral regression.</p>
   <p>When a difference is expected, attach a short explanation to the change record and add a focused regression test if the new behavior is part of the intended contract. Do not create a blanket suppression tied to a PR number; it will disappear from view while the code remains. If the difference is unexpected, the report should make it possible to replay the same scenario locally with the same input fixture and base SHA.</p>
   <p>Measure whether the extra check catches issues earlier, how often it is unstable, and how long it adds to CI. Keep a small test suite that exercises the comparator itself: a changed status must be reported, a dropped cookie must remain visible, a database delta must be attributable, and a volatile field must only be normalized when explicitly configured. The verification system is also software and needs its own tests.</p>
-  <p>Neukee’s CI verification direction is to compare selected candidate behavior against a cached main baseline, including HTTP and <code>undici</code> observations and PostgreSQL row deltas, with repeat runs to help surface noise. That kind of report can help reviewers focus on meaningful differences in dependency and AI-agent PRs. It cannot certify correctness, replace code review, or eliminate the need for a sandbox. Keep the harness transparent, make its limits obvious, and require a human to decide whether a behavioral change is acceptable.</p>
+  <p>Neukee's behavioral engine is planned, not released: the idea is to compare a pull request's behavior against a cached baseline from the main branch on your own tests, including HTTP and <code>undici</code> observations and PostgreSQL row changes, with repeat runs to surface noise. A report like that can help reviewers focus on meaningful differences in dependency and AI-agent pull requests. It cannot certify correctness, replace code review, or eliminate the need for a sandbox. Keep the harness transparent, make its limits obvious, and require a human to decide whether a behavioral change is acceptable.</p>
 </GuideLayout>

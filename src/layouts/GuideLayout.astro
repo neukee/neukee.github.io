@@ -39,10 +39,11 @@ const breadcrumbLd = {
     { '@type': 'ListItem', position: 3, name: title, item: new URL(canonicalPath, site).toString() },
   ],
 };
+const toc = Astro.slots.has('toc') ? await Astro.slots.render('toc') : '';
 ---
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} ogType="article" jsonLd={{ '@graph': [jsonLd, breadcrumbLd] }} noindex={underReview}>
-  <div class="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-16">
+  <div class="mx-auto max-w-7xl px-5 pb-12 pt-24 lg:px-8 lg:pb-16 lg:pt-28">
     <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_250px]">
       <article class="min-w-0">
         <a href="/guides/" class="font-mono text-xs text-emerald-300 hover:text-emerald-200">← ALL UPGRADE GUIDES</a>
@@ -56,6 +57,12 @@ const breadcrumbLd = {
             </p>
           )}
         </header>
+        {toc && (
+          <details class="mb-10 rounded-xl border border-zinc-800 bg-surface p-5 lg:hidden">
+            <summary class="cursor-pointer font-mono text-[11px] uppercase tracking-[.18em] text-zinc-400">On this page</summary>
+            <nav class="mt-4 space-y-3 text-sm text-zinc-400" aria-label="Table of contents"><Fragment set:html={toc} /></nav>
+          </details>
+        )}
         <div class="prose-technical max-w-none" data-reveal><slot /></div>
         {sources.length > 0 && (
           <section class="prose-technical mt-12 border-t border-zinc-800 pt-8" aria-labelledby="sources-heading">
@@ -74,14 +81,14 @@ const breadcrumbLd = {
           </div>
         </aside>
       </article>
-      <aside class="order-first lg:order-last">
-        <div class="top-28 rounded-xl border border-zinc-800 bg-surface p-5 lg:sticky">
-          <p class="font-mono text-[11px] uppercase tracking-[.18em] text-zinc-500">On this page</p>
-          <nav class="mt-4 space-y-3 text-sm text-zinc-400" aria-label="Table of contents">
-            <slot name="toc" />
-          </nav>
-        </div>
-      </aside>
+      {toc && (
+        <aside class="hidden lg:block">
+          <div class="rounded-xl border border-zinc-800 bg-surface p-5 lg:sticky lg:top-28">
+            <p class="font-mono text-[11px] uppercase tracking-[.18em] text-zinc-500">On this page</p>
+            <nav class="mt-4 space-y-3 text-sm text-zinc-400" aria-label="Table of contents"><Fragment set:html={toc} /></nav>
+          </div>
+        </aside>
+      )}
     </div>
   </div>
 </BaseLayout>

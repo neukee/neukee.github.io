@@ -1,100 +1,186 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
 
-const title = 'Node.js 22 to 26: Breaking Changes, OpenSSL, and Native Addons';
-const description = 'A compatibility-first guide to a Node.js 22-to-26 migration: OpenSSL and RSA key policy, native module ABI rebuilds, require(esm), and removed deprecated APIs.';
+const title = 'Node.js 22 to 26 Upgrade: Every Breaking Change and How to Find It';
+const description =
+  'Upgrading from Node.js 22 to 26 (or 24): removed APIs, new deprecation warnings, TLS security level 2, native module ABI 147, require(esm), Corepack no longer bundled. With a search for each change.';
 const path = '/guides/node-22-to-26-breaking-changes/';
+const sources = [
+  { title: 'Node.js release schedule (nodejs/Release, schedule.json)', url: 'https://github.com/nodejs/Release#release-schedule' },
+  { title: 'Node.js 26 deprecations (docs for v26.x)', url: 'https://nodejs.org/docs/latest-v26.x/api/deprecations.html' },
+  { title: 'Node.js 23.0.0 changelog', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V23.md#23.0.0' },
+  { title: 'Node.js 24.0.0 changelog', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md#24.0.0' },
+  { title: 'Node.js 24.5.0 changelog (OpenSSL 3.5)', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V24.md#24.5.0' },
+  { title: 'Node.js 25.0.0 changelog', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V25.md#25.0.0' },
+  { title: 'Node.js 26.0.0 changelog', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V26.md#26.0.0' },
+  { title: 'Node.js 22.12.0 changelog (require(esm) enabled by default)', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V22.md#22.12.0' },
+  { title: 'Node.js 22.20.0 changelog (OpenSSL 3.5.2, security level fixed at 1)', url: 'https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V22.md#22.20.0' },
+  { title: 'Node.js 22 TLS docs: OpenSSL security level', url: 'https://nodejs.org/docs/latest-v22.x/api/tls.html#openssl-security-level' },
+  { title: 'Node.js 26 TLS docs: OpenSSL security level', url: 'https://nodejs.org/docs/latest-v26.x/api/tls.html#openssl-security-level' },
+  { title: 'OpenSSL 3.5: SSL_CTX_set_security_level', url: 'https://github.com/openssl/openssl/blob/openssl-3.5/doc/man3/SSL_CTX_set_security_level.pod' },
+  { title: 'Node.js 26 globals: localStorage', url: 'https://nodejs.org/docs/latest-v26.x/api/globals.html#localstorage' },
+  { title: 'Node.js Node-API docs', url: 'https://nodejs.org/docs/latest-v26.x/api/n-api.html' },
+  { title: 'Node.js ABI version registry', url: 'https://github.com/nodejs/node/blob/main/doc/abi_version_registry.json' },
+  { title: 'Node.js distribution policy (Corepack history)', url: 'https://github.com/nodejs/node/blob/main/doc/contributing/distribution.md' },
+  { title: 'Corepack README', url: 'https://github.com/nodejs/corepack#readme' },
+  { title: 'Node.js userland migrations (official codemods)', url: 'https://github.com/nodejs/userland-migrations' },
+  { title: 'npm docs: package-lock.json (hasInstallScript)', url: 'https://github.com/npm/cli/blob/latest/docs/lib/content/configuring-npm/package-lock-json.md' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path}>
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-25" {sources}>
   <Fragment slot="toc">
-    <a class="block hover:text-emerald-300" href="#migration-shape">Migration shape</a>
-    <a class="block hover:text-emerald-300" href="#openssl">OpenSSL &amp; RSA</a>
-    <a class="block hover:text-emerald-300" href="#native">Native addons &amp; ABI</a>
-    <a class="block hover:text-emerald-300" href="#require-esm">require(esm)</a>
-    <a class="block hover:text-emerald-300" href="#removed-apis">Deprecated APIs</a>
-    <a class="block hover:text-emerald-300" href="#test-plan">Test plan</a>
+    <a class="block hover:text-violet-200" href="#timeline">Which version to target</a>
+    <a class="block hover:text-violet-200" href="#before-you-start">Before you start</a>
+    <a class="block hover:text-violet-200" href="#removed">Removed APIs</a>
+    <a class="block hover:text-violet-200" href="#new-warnings">New deprecation warnings</a>
+    <a class="block hover:text-violet-200" href="#tls">TLS and crypto</a>
+    <a class="block hover:text-violet-200" href="#native">Native addons</a>
+    <a class="block hover:text-violet-200" href="#modules">Modules and globals</a>
+    <a class="block hover:text-violet-200" href="#tooling">Corepack and platforms</a>
+    <a class="block hover:text-violet-200" href="#checklist">Checklist</a>
   </Fragment>
 
-  <p>Moving from Node.js 22 to Node.js 26 crosses several release lines. Treat it as a migration across four majors, not a single “Node upgrade” checkbox. Runtime behavior, embedded OpenSSL and V8 versions, native module compatibility, and the package graph can all change between the two tested environments. Read the official release notes for each intermediate major and validate the final patch version you intend to deploy; a summary of notable risks is not an exhaustive compatibility contract.</p>
-  <p>This guide focuses on changes that commonly escape a simple unit-test run. It does not imply every application will hit every issue. The safe approach is to identify where your code and dependencies touch these boundaries, then turn each relevant concern into a reproducible test or explicit exception.</p>
+  <p>Node.js 26 has been the Active LTS line since October 28, 2026, and Node.js 22 reaches end of life on April 30, 2027. Moving from 22 to 26 crosses four majors (23, 24, 25 and 26). This guide lists the changes between them that can break a working application, taken from the official changelogs and the Node.js 26 deprecation list, with a quick search for each one.</p>
+  <p>The searches use <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a> (<code>rg</code>), which respects <code>.gitignore</code>, so <code>node_modules</code> is usually skipped. They are deliberately simple: they can match code that is fine and miss code that isn't, so treat each result as a place to look, not a verdict. A removed API used inside a dependency won't show up here; updating the dependency is the fix for that.</p>
 
-  <h2 id="migration-shape">Model the migration as a sequence</h2>
-  <p>Before editing a version pin, build an inventory of Node selection points and native packages. Capture the current Node 22 production image, lockfile, architecture, and representative smoke-test results. If a failure appears only after moving directly to 26, test intermediate majors to determine whether the break originated in one release boundary or in the final environment. This makes upstream issue reports and rollback decisions much more precise.</p>
-  <p>For each candidate, record exact runtime and package-manager versions in CI. “Node 26” is a moving major tag, not a reproducible test case. Pin the version or container digest according to your patch-update policy, then deliberately refresh it. Keep the operating system and libc constant where possible; changing Alpine to Debian at the same time can obscure native binary and TLS differences.</p>
-  <pre is:raw><code># Before: reproducible only by convention
-FROM node:22
-RUN npm ci
+  <h2 id="timeline">Which version to target</h2>
+  <div class="overflow-x-auto">
+    <table>
+      <thead><tr><th>Line</th><th>Status (November 2026)</th><th>End of life</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js 22 "Jod"</td><td>Maintenance LTS since October 21, 2025</td><td>April 30, 2027</td></tr>
+        <tr><td>Node.js 24 "Krypton"</td><td>Maintenance LTS since October 20, 2026</td><td>April 30, 2028</td></tr>
+        <tr><td>Node.js 26 "Lithium"</td><td>Active LTS since October 28, 2026; maintenance from October 20, 2027</td><td>April 30, 2029</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Node.js 23 and 25 were short-lived Current releases and are already past end of life. Node.js 27 is scheduled for April 22, 2027. Dates come from the official release schedule, which can change; check it when you plan.</p>
+  <p>Node.js 26 gives the longest runway: a year more than 24. Choose 24 only if something you depend on doesn't support 26 yet, and plan the second move before April 2028. Either way, the changes below up to the version you choose all apply.</p>
 
-# After: align the tested line and target platform
-FROM node:26-bookworm
-RUN npm ci
-RUN node --version &amp;&amp; npm --version</code></pre>
-  <p>The after snippet illustrates a coordinated move, not a universal recommendation for Debian or floating image tags. Use a digest if your supply-chain process requires immutable builds, and make sure development, CI, and production all exercise the same intended runtime family.</p>
+  <h2 id="before-you-start">Before you start</h2>
+  <p>First find every place your project declares a Node.js version. Production runs whichever one the deploy path picks, which is often not the one in <code>.nvmrc</code>:</p>
+  <pre><code>cat .nvmrc .node-version 2&gt;/dev/null
+rg -n '"node"' -g 'package.json'
+rg -n '^FROM\s+\S*node' -g 'Dockerfile*'
+rg -n 'node-version' .github/workflows</code></pre>
+  <p>Then run your tests on Node.js 22 with deprecations turned into errors. Most of what Node.js 23 to 26 removed already prints a <code>DeprecationWarning</code> on Node.js 22: of the 27 removals listed in the next section, 20 warn at runtime on Node.js 22.23.5. Fixing them while you are still on 22 keeps the upgrade itself small:</p>
+  <pre><code>NODE_OPTIONS=--throw-deprecation npm test
+# or, to see where each warning comes from without failing:
+NODE_OPTIONS=--trace-deprecation npm test</code></pre>
+  <p>The Node.js project publishes <a href="https://github.com/nodejs/userland-migrations">official codemods</a> for many of these removals, run with <code>npx codemod@latest @nodejs/&lt;recipe&gt;</code>. The deprecation list links the recipe for each one that has it. Review what a codemod changes the same way you would review a person's change.</p>
 
-  <h2 id="openssl">OpenSSL 3.5, RSA keys, and TLS policy</h2>
-  <p>Node embeds OpenSSL, so a runtime upgrade can change cryptographic implementation details and the library version independently of your application code. Node 26 is associated with the OpenSSL 3.5 generation; verify the exact version in the Node release notes and in the binary you deploy by inspecting <code>process.versions.openssl</code>. OpenSSL security levels and provider configuration affect which keys, signatures, ciphers, and protocols are accepted. RSA keys below 2048 bits are a particular compatibility concern: policies commonly reject these keys at modern security levels, and weak keys should not be “fixed” by relaxing production TLS requirements.</p>
-  <p>Inventory private CA bundles, client certificates, certificate pinning, self-signed development endpoints, JWT signing keys, and integrations that still use legacy RSA material. A failure can occur during certificate-chain verification or when code attempts to load a key—not just during an outbound HTTPS request. Test the actual connection path in a staging environment that uses the target runtime, OpenSSL configuration, and trust store.</p>
-  <pre is:raw><code>// Log runtime crypto details without exposing key material
-console.info({
-  node: process.version,
-  openssl: process.versions.openssl,
-});
+  <h2 id="removed">Removed APIs (End-of-Life) between 23 and 26</h2>
+  <p>These no longer exist or now throw. The version is the first major without them, so if you stop at Node.js 24, only the rows up to 24 apply.</p>
+  <div class="overflow-x-auto">
+    <table>
+      <thead><tr><th>Removed</th><th>In</th><th>Use instead</th></tr></thead>
+      <tbody>
+        <tr><td><code>util.isBoolean()</code>, <code>util.isBuffer()</code>, <code>util.isDate()</code>, <code>util.isError()</code>, <code>util.isFunction()</code>, <code>util.isNull()</code>, <code>util.isNullOrUndefined()</code>, <code>util.isNumber()</code>, <code>util.isObject()</code>, <code>util.isPrimitive()</code>, <code>util.isRegExp()</code>, <code>util.isString()</code>, <code>util.isSymbol()</code>, <code>util.isUndefined()</code></td><td>23</td><td><code>typeof</code>, <code>Array.isArray()</code>, <code>Buffer.isBuffer()</code> and similar checks (codemod <code>@nodejs/util-is</code>)</td></tr>
+        <tr><td><code>util.log()</code></td><td>23</td><td>A logging library, or <code>console.log</code> with your own timestamp</td></tr>
+        <tr><td><code>process.assert()</code></td><td>23</td><td>The <code>node:assert</code> module</td></tr>
+        <tr><td><code>zlib.bytesRead</code></td><td>23</td><td><code>zlib.bytesWritten</code></td></tr>
+        <tr><td><code>tls.createSecurePair()</code>, <code>tls.SecurePair</code></td><td>24</td><td><code>tls.TLSSocket</code></td></tr>
+        <tr><td><code>OutgoingMessage.prototype._headers</code>, <code>._headerNames</code></td><td>24</td><td><code>getHeader()</code>, <code>getHeaders()</code>, <code>getHeaderNames()</code></td></tr>
+        <tr><td><code>fs.truncate()</code> with a file descriptor</td><td>24</td><td><code>fs.ftruncate()</code></td></tr>
+        <tr><td><code>timers.enroll()</code>, <code>timers.unenroll()</code>, <code>timers.active()</code>, <code>timers._unrefActive()</code></td><td>24</td><td><code>setTimeout()</code>, <code>setInterval()</code>, <code>timeout.refresh()</code></td></tr>
+        <tr><td><code>net._setSimultaneousAccepts()</code></td><td>24</td><td>Nothing; it was an undocumented debugging function</td></tr>
+        <tr><td><code>dirent.path</code></td><td>24</td><td><code>dirent.parentPath</code></td></tr>
+        <tr><td><code>SlowBuffer</code></td><td>25</td><td><code>Buffer.allocUnsafeSlow(size)</code></td></tr>
+        <tr><td><code>fs.F_OK</code>, <code>fs.R_OK</code>, <code>fs.W_OK</code>, <code>fs.X_OK</code></td><td>25</td><td><code>fs.constants.F_OK</code> and the rest</td></tr>
+        <tr><td><code>fs.rmdir(path, &#123; recursive: true &#125;)</code></td><td>25</td><td><code>fs.rm(path, &#123; recursive: true, force: true &#125;)</code></td></tr>
+        <tr><td><code>assert.fail()</code> with more than one argument</td><td>25</td><td><code>assert.fail(message)</code> or another <code>assert</code> method</td></tr>
+        <tr><td><code>assert.CallTracker</code></td><td>25</td><td>Nothing in <code>node:assert</code>; use your test runner's mock functions</td></tr>
+        <tr><td><code>process.on('multipleResolves')</code></td><td>25</td><td>Nothing; the event is gone</td></tr>
+        <tr><td><code>ChildProcess._channel</code></td><td>25</td><td><code>ChildProcess.channel</code></td></tr>
+        <tr><td>Closing an <code>fs.FileHandle</code> by garbage collection</td><td>25</td><td>Call <code>filehandle.close()</code> explicitly; leaving it to GC now throws</td></tr>
+        <tr><td><code>dns.lookup()</code> with a falsy host name, a TLS <code>servername</code> set to an IP address, <code>url.parse()</code> with a non-numeric port</td><td>25</td><td>Validate the input: these are no longer accepted</td></tr>
+        <tr><td><code>ServerResponse.prototype.writeHeader()</code></td><td>26</td><td><code>writeHead()</code></td></tr>
+        <tr><td><code>require('node:_stream_wrap')</code>, <code>_stream_readable</code>, <code>_stream_writable</code>, <code>_stream_duplex</code>, <code>_stream_transform</code>, <code>_stream_passthrough</code></td><td>26</td><td><code>node:stream</code></td></tr>
+        <tr><td>Short GCM authentication tags without an explicit <code>authTagLength</code></td><td>26</td><td>Pass <code>authTagLength</code> when you create the decipher</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre><code>rg -n 'util\.(is[A-Z]\w*|log)\(|process\.assert\(|zlib.*bytesRead'
+rg -n 'SecurePair|\._headers\b|\._headerNames\b|_setSimultaneousAccepts'
+rg -n '\b(enroll|unenroll|_unrefActive)\(|timers\.active\('
+rg -n 'SlowBuffer|fs\.[FRWX]_OK\b|CallTracker|multipleResolves|\._channel\b'
+rg -n 'rmdir(Sync)?\([^)]*recursive|assert\.fail\([^)]*,'
+rg -n '\.writeHeader\(|_stream_(wrap|readable|writable|duplex|transform|passthrough)'
+rg -n 'withFileTypes'    # then check for dirent.path
+rg -n 'setAuthTag\('     # then check authTagLength on the decipher</code></pre>
 
-// A migration test should validate expected endpoints and CA policy.
-const response = await fetch(process.env.STAGING_TLS_HEALTH_URL);
-if (!response.ok) throw new Error(`TLS health check failed: ${response.status}`);</code></pre>
-  <p>Do not log certificate private keys, authorization headers, or sensitive endpoint query strings to “debug” a handshake. Instead, use sanitized diagnostics, inspect certificates through your normal secret-management workflow, and record the precise OpenSSL error. If a partner still depends on weak cryptography, treat the finding as an explicit risk and coordinate remediation; do not lower the security level globally to make a test pass.</p>
+  <h2 id="new-warnings">New deprecation warnings in 24, 25 and 26</h2>
+  <p>These still work on Node.js 26 but print a warning. They matter now because removal is the next step: on Node's main branch, seven of them are already marked End-of-Life for a future major.</p>
+  <ul>
+    <li><strong><code>url.parse()</code></strong> (24): warns when called from your own code, not from <code>node_modules</code>. <code>url.format(string)</code> and <code>url.resolve()</code> call it internally, so they are covered too. Use the WHATWG <code>URL</code> class.</li>
+    <li><strong><code>spawn</code> or <code>execFile</code> with an <code>args</code> array and the <code>shell</code> option</strong> (24): the arguments are only space-separated, not escaped, which can lead to shell injection.</li>
+    <li><strong>Calling <code>node:zlib</code> classes without <code>new</code></strong> (24), and <strong>passing an unsupported argument type to <code>fs.existsSync</code></strong> (24), which will throw instead of returning <code>false</code>.</li>
+    <li><strong><code>crypto.fips</code></strong> (23): use <code>crypto.setFips()</code> and <code>crypto.getFips()</code>.</li>
+    <li><strong><code>ecdh.setPublicKey()</code></strong> (25), and <strong>SHAKE-128/256 digests without an explicit <code>outputLength</code></strong> (25).</li>
+    <li><strong>Passing a <code>CryptoKey</code> to <code>node:crypto</code> functions</strong> (26), and <strong><code>KeyObject.from()</code> with a non-extractable <code>CryptoKey</code></strong> (26).</li>
+    <li><strong><code>module.register()</code></strong> (26): use <code>module.registerHooks()</code>, which runs synchronously, in-thread, for all module types. Loaders for TypeScript, mocking and instrumentation often call <code>module.register()</code>, so this warning may come from a tool rather than your code.</li>
+    <li><strong><code>options.type</code> in <code>Duplex.toWeb()</code></strong> (26): use <code>readableType</code>.</li>
+  </ul>
+  <pre><code>rg -n 'url\.(parse|format|resolve)\('
+rg -n 'shell:\s*(true|["\x27/])'
+rg -n 'zlib\.(Deflate|DeflateRaw|Gunzip|Gzip|Inflate|InflateRaw|Unzip)\(' | rg -v 'new '
+rg -n 'crypto\.fips|setPublicKey\(|shake(128|256)'
+rg -n 'module\.register\(|registerHooks'</code></pre>
 
-  <h2 id="native">Native addons: ABI is not the same as Node-API</h2>
-  <p>Traditional native addons compiled against V8 or Node’s C++ interfaces are tied to the runtime ABI. <code>process.versions.modules</code> exposes the <code>NODE_MODULE_VERSION</code> value; a binary compiled for one value generally cannot be loaded by another. Node-API (formerly N-API) offers a versioned ABI stability contract for addons that use only its supported API, but the existence of an N-API prebuild does not guarantee that the package publishes a binary for your operating system, architecture, libc, and target Node-API version.</p>
-  <p>Start from the resolved lockfile, including transitive dependencies. Search install logs and package metadata for packages that compile C/C++ or download prebuilt binaries. Confirm current upstream support and package maintenance status. Rebuild native dependencies inside the final build environment; never copy a <code>node_modules</code> tree from a developer’s macOS machine into a Linux production image. Test optional dependency behavior as well: some packages install successfully but quietly fall back to a slower or less capable implementation.</p>
-  <pre is:raw><code>// Diagnostic facts safe to include in a CI report
-console.info({
-  node: process.version,
-  modulesAbi: process.versions.modules,
-  napi: process.versions.napi,
-  platform: process.platform,
-  architecture: process.arch,
-});</code></pre>
-  <p>When a native addon fails, capture the complete build context and error rather than repeatedly clearing the lockfile. Check the package’s compatibility matrix, compiler toolchain, Python requirements, system libraries, and whether the package has an N-API-based release. A transitive package pinned several levels below the top-level dependency may require an explicit upstream update or replacement.</p>
+  <h2 id="tls">TLS and crypto: security level 2</h2>
+  <p>This is the change most likely to pass every unit test and fail in production. Node.js 22 now bundles OpenSSL 3.5 too (since 22.20.0), but it keeps the OpenSSL security level at 1, and its TLS docs state a default of 1. Node.js 24 moved to OpenSSL 3.5 in 24.5.0 without that pin, and the Node.js 24 and 26 docs both give a default of 2.</p>
+  <p>OpenSSL defines level 2 as 112 bits of security: <strong>RSA, DSA and DH keys shorter than 2048 bits and ECC keys shorter than 224 bits are prohibited</strong>, and RC4 cipher suites are refused. A 1024-bit RSA key that works on Node.js 22 is rejected on 24 and 26. It can be your own server certificate, a client certificate for mutual TLS, a private CA in your trust store, or a partner's endpoint you call.</p>
+  <p>Check the key sizes you control, and test every outbound TLS integration against the target version in staging:</p>
+  <pre><code># key size of a certificate
+openssl x509 -in cert.pem -noout -text | rg 'Public-Key'
+# certificates and keys checked into the repo
+rg --files | rg '\.(pem|crt|cer|key)$'
+# places that set ciphers or a security level
+rg -n 'SECLEVEL|ciphers:|--tls-cipher-list'</code></pre>
+  <p>Node's docs show how to lower the level with <code>@SECLEVEL=0</code> in a cipher string, and warn against doing it globally with <code>--tls-cipher-list</code>. If a partner still needs a weak key, lower it only on that one connection, record it as a known risk with an owner, and plan its removal.</p>
+  <p>Node.js 26 also removed short GCM authentication tags without an explicit <code>authTagLength</code> (see the table above). Code that decrypts AES-GCM data produced elsewhere, for example by another service or a mobile client, is where to look.</p>
 
-  <h2 id="require-esm">CommonJS require(esm) is not a universal interoperability switch</h2>
-  <p>Recent Node releases have expanded support for loading certain synchronous ES modules through <code>require()</code>. This can ease some migrations, but the behavior depends on module format detection, the module graph, and whether top-level await is used. A CommonJS package cannot simply assume that every ESM dependency will now load. Conditional exports may select different entry points for <code>import</code> and <code>require</code>, and changing the selected entry can expose differences in initialization or singleton state.</p>
-  <p>Test the package entry points your production code actually uses. Include a dependency with an ESM-only export if your graph contains one, exercise the CommonJS call site, and include a module with top-level await to verify the intended failure behavior. Check for experimental or warning changes in the exact Node releases you support. If an API is meant to be asynchronous, prefer an explicit dynamic import and propagate the promise rather than relying on a synchronous bridge.</p>
-  <pre is:raw><code>// Before: implicit CommonJS loading can fail for ESM-only packages
-const library = require('esm-only-library');
+  <h2 id="native">Native addons: rebuild for ABI 147</h2>
+  <p>A native addon compiled against Node's internals only loads on the Node.js version it was built for. That version is <code>process.versions.modules</code> (<code>NODE_MODULE_VERSION</code>): <strong>127</strong> on Node.js 22, <strong>137</strong> on 24 and <strong>147</strong> on 26. A binary built for 127 fails to load on 147, with an error naming both <code>NODE_MODULE_VERSION</code> values.</p>
+  <p>Addons built only on Node-API (<code>process.versions.napi</code>) are the exception: Node-API is ABI-stable across Node.js versions, so the same binary keeps working. The package still has to publish a binary for your operating system, CPU architecture and C library, or compile one at install time.</p>
+  <p>npm's lockfile marks packages that run an install script, which is usually a native build, with <code>hasInstallScript</code>. Start there, including dependencies of dependencies:</p>
+  <pre><code>node -e "const l = require('./package-lock.json'); for (const [k, v] of Object.entries(l.packages ?? &#123;&#125;)) if (v.hasInstallScript) console.log(k)"</code></pre>
+  <p>Install and build in the same image that will run in production, on the target version. Don't copy <code>node_modules</code> from a build stage on another Node.js version, or from a developer's machine, into the runtime image.</p>
 
-// After: explicit asynchronous boundary
-async function loadLibrary() {
-  const library = await import('esm-only-library');
-  return library.default ?? library;
-}</code></pre>
-  <p>The second pattern changes the call contract: callers must await initialization. If that is not possible, select a dependency version with a supported CommonJS export or isolate the interop behind a deliberate adapter. Do not paper over a loader error by swallowing it and returning an empty module object.</p>
+  <h2 id="modules">Modules and globals</h2>
+  <ul>
+    <li><strong><code>require(esm)</code> is on by default</strong> (since 22.12.0 and in 23+). <code>require()</code> of an ES module no longer throws <code>ERR_REQUIRE_ESM</code>; it throws <code>ERR_REQUIRE_ASYNC_MODULE</code> instead if the module or its dependencies use top-level <code>await</code>. Code that caught <code>ERR_REQUIRE_ESM</code> to fall back to <code>import()</code> may now take a different path.</li>
+    <li><strong><code>--experimental-transform-types</code> was removed</strong> in 26. Scripts or <code>NODE_OPTIONS</code> that pass it fail to start.</li>
+    <li><strong><code>--experimental-permission</code> became <code>--permission</code></strong> in 24.</li>
+    <li><strong><code>localStorage</code> is a global, with a catch.</strong> Web Storage is enabled by default since 25. On 25, reading <code>localStorage</code> without <code>--localstorage-file</code> returns an empty object; on 26 it throws a <code>DOMException</code>. Server code that checks for <code>localStorage</code> to decide whether it runs in a browser needs another check. <code>--no-experimental-webstorage</code> turns the API off.</li>
+  </ul>
+  <pre><code>rg -n 'ERR_REQUIRE_ESM'
+rg -n 'experimental-transform-types|experimental-permission'
+rg -n 'localStorage'</code></pre>
 
-  <h2 id="removed-apis">Deprecated APIs and behavior removals</h2>
-  <p>Deprecation does not always mean immediate removal, and an API’s status can change across majors. Read deprecation documentation and release notes for Node 23, 24, 25, and 26 rather than treating a generic migration list as definitive. Search code and transitive libraries for deprecated APIs that are relevant to your version path. Enable trace warnings in a controlled CI job, but avoid relying on warning output alone: a code path may be dormant in the tested scenarios.</p>
-  <p>Pay particular attention to APIs that touch parsing, streams, TLS, URL handling, module loading, and legacy protocol behavior. Replace a deprecated API with its documented supported equivalent, then test edge cases such as malformed input, stream cancellation, and error propagation. If the warning comes from a third-party library, update it or document a bounded exception with an owner and review date.</p>
-  <p>A useful before-and-after change is small and explicit. For example, replace legacy URL parsing in new code with the WHATWG URL interface and test invalid values instead of relying on permissive legacy behavior:</p>
-  <pre is:raw><code>// Before: legacy parsing may accept surprising input
-const parsed = require('node:url').parse(rawUrl);
+  <h2 id="tooling">Corepack, npm and platforms</h2>
+  <p><strong>Corepack is no longer distributed with Node.js, as of 25.0.0.</strong> A Dockerfile or CI step that runs <code>corepack enable</code> to get pnpm or Yarn now depends on something else providing Corepack: check whether your base image or CI setup installs it. The Corepack project's own instructions are <code>npm install -g corepack</code>. A <code>packageManager</code> field in <code>package.json</code> is a sign the project relies on it.</p>
+  <pre><code>rg -n 'corepack' -g 'Dockerfile*' -g '*.yml' -g '*.yaml' -g 'package.json'
+rg -n '"packageManager"' -g 'package.json'</code></pre>
+  <p>Other changes to check:</p>
+  <ul>
+    <li><strong>npm 11</strong> ships with Node.js 24. Run your install and lockfile checks with the npm version that comes with your target.</li>
+    <li><strong>Platforms:</strong> 32-bit Windows was dropped in 23. Node.js 24 raised the minimum supported macOS to 13.5, removed 32-bit s390 and moved armv7 to experimental support.</li>
+    <li><strong>Behavior worth a test run:</strong> <code>AsyncLocalStorage</code> uses <code>AsyncContextFrame</code> by default from 24 (relevant if you use APM or request-context libraries); <code>fetch</code> runs on Undici 7 in 24 and Undici 8 in 26; the Temporal API is enabled by default in 26.</li>
+  </ul>
 
-// After: require a well-formed absolute URL
-const parsedUrl = new URL(rawUrl);
-if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
-  throw new TypeError('Unsupported URL protocol');
-}</code></pre>
-  <p>This is an example of a safer parsing contract, not a claim that every use of the legacy API is removed in Node 26. Verify deprecation status for your chosen release and preserve the application’s intended URL semantics during conversion.</p>
+  <h2 id="checklist">Checklist</h2>
+  <ul>
+    <li>Pick the target (26 unless a dependency blocks it) and change every version declaration together: version files, <code>engines</code>, Dockerfiles, CI and hosting settings.</li>
+    <li>On Node.js 22, run the tests with <code>--throw-deprecation</code> and fix what fails.</li>
+    <li>Run the searches above and work through the removed APIs and new warnings.</li>
+    <li>Check key sizes and test outbound TLS on the target version in staging.</li>
+    <li>Rebuild native dependencies in the production image on the target version.</li>
+    <li>Install Corepack explicitly if you use it.</li>
+    <li>Run the full test suite and a production-like build on the target, then roll out gradually with a way back.</li>
+  </ul>
 
-  <h2 id="test-plan">A migration test plan that catches real incompatibility</h2>
-  <ol>
-    <li>Pin and record the exact Node 22 baseline and target Node 26 build, plus OS, architecture, and package manager.</li>
-    <li>Install from the committed lockfile in a clean environment and capture every native build or prebuild selection.</li>
-    <li>Run static analysis for deprecated API use and module-format boundaries; inspect package export maps where CommonJS and ESM meet.</li>
-    <li>Exercise TLS to representative staging endpoints with the production trust policy and valid certificate material.</li>
-    <li>Run integration tests that cover database, queue, filesystem, HTTP, and startup/shutdown paths, not just mocked unit functions.</li>
-    <li>Compare relevant responses and persisted side effects between baseline and candidate; investigate differences instead of normalizing them away.</li>
-    <li>Canary with rollback criteria and keep the prior artifact available until operational signals meet the agreed threshold.</li>
-  </ol>
-  <p>The final release decision should state both what passed and what remains uncertain. A clean static scan cannot prove a binary prebuild will work on every deployment architecture; a successful compile cannot prove TLS policy is accepted by every partner; and a passing test suite cannot establish behavior for an unexercised route. Neukee can help flag runtime drift, locked native dependencies, and risky code patterns before the upgrade PR lands. Use that result as a map for targeted tests, then let reproducible build and production-like evidence decide whether Node 26 is ready for your service.</p>
+  <h2 id="neukee">Where Neukee fits</h2>
+  <p>Neukee is an open-source, local-first scanner for upgrades like this one. Version 0.1.0, planned for December 8, 2026, is built to flag Node.js versions that disagree across your repository, versions below your target or past end of life, and dependencies that run install scripts, each linked to its official source. Rules for the removed APIs in this guide are planned after launch. Follow it on <a href="https://github.com/neukee/neukee">GitHub</a>.</p>
 </GuideLayout>

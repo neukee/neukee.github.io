@@ -7,3 +7,7 @@ export const PROFILES = {
   x: 'https://x.com/neukee4dev',
   crunchbase: 'https://www.crunchbase.com/organization/neukee',
 } as const;
+
+// Google Search Console ownership check (HTML tag method). Paste only the value of the
+// content attribute Google shows, e.g. 'AbC123...'. It is public by design. Empty = no tag.
+export const GOOGLE_SITE_VERIFICATION = '';

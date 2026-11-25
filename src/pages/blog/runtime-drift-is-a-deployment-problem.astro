@@ -4,9 +4,14 @@ import GuideLayout from '../../layouts/GuideLayout.astro';
 const title = 'Runtime Drift Is a Deployment Problem, Not a Version-File Problem';
 const description = 'A practical way to find Node.js version drift across developer tools, CI workflows, Docker images, serverless settings, and production.';
 const path = '/blog/runtime-drift-is-a-deployment-problem/';
+const sources = [
+  { title: 'npm docs: package.json engines', url: 'https://github.com/npm/cli/blob/latest/docs/lib/content/configuring-npm/package-json.md#engines' },
+  { title: 'Docker official images: node tags', url: 'https://github.com/docker-library/official-images/blob/master/library/node' },
+  { title: 'Node.js release schedule', url: 'https://github.com/nodejs/Release#release-schedule' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23">
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-25" {sources}>
   <Fragment slot="toc">
     <a class="block hover:text-violet-200" href="#one-service-many-versions">One service, many versions</a>
     <a class="block hover:text-violet-200" href="#inventory">Build the inventory</a>
@@ -17,13 +22,14 @@ const path = '/blog/runtime-drift-is-a-deployment-problem/';
   <p>This mismatch is operational, not merely cosmetic. A native addon may compile under one Node ABI and fail in another image. A modern TLS policy may behave differently in a different runtime build. A CI test can pass against a developer version while deployment rebuilds dependencies for a distinct libc or architecture.</p>
   <h2 id="one-service-many-versions">One service can select several versions</h2>
   <p>Start by treating each place that selects a runtime as part of the production design. A repository may include <code>.nvmrc</code>, <code>.node-version</code>, Volta settings, <code>package.json#engines</code>, a Docker base image, an action setup version, and platform-specific build settings. Add release scripts, scheduled tasks, preview deployments, and the image used to compile native dependencies.</p>
-  <p>These values serve different audiences. A version manager file helps a developer select a local runtime. The package manager may only warn about an engines mismatch. CI selects the binary that runs the job. A Dockerfile chooses the image used during build and run. A deployment platform may select yet another runtime based on configuration or an account-level default. A consistent-looking package manifest does not prove that these choices align.</p>
+  <p>These values serve different audiences. A version manager file helps a developer select a local runtime. The package manager may only warn about an engines mismatch: npm's documentation calls <code>engines</code> advisory unless <code>engine-strict</code> is set. CI selects the binary that runs the job. A Dockerfile chooses the image used during build and run. A deployment platform may select yet another runtime based on configuration or an account-level default. A consistent-looking package manifest does not prove that these choices align.</p>
+  <p>Floating tags make this worse, because the version can change without a commit. In Docker's official images, <code>node:lts</code> and <code>node:latest</code> now point to Node.js 26, which became the Active LTS line on October 28, 2026. A Dockerfile that says <code>FROM node:lts</code> moved from 24 to 26 on its next rebuild, while <code>.nvmrc</code> and CI stayed where they were.</p>
   <h2 id="inventory">Build the inventory before changing the pin</h2>
   <p>Create a small matrix for each deployable unit: repository and path, declared version, CI version, build image, runtime image, hosting setting, owner, and proposed target. Use repository search to discover candidates, then confirm values in the actual deployment configuration. Do not treat every text match as active configuration; examples, archived workflows, and comments can create false positives. Conversely, a setting stored in a separate infrastructure repository may not appear in an application search at all.</p>
   <p>Once the inventory exists, make the expected version explicit. A single policy can still permit tool-specific versions—for example, a build tool running a supported LTS while the application runtime moves to a newer line—but document why. Verify that CI fails when the runtime unexpectedly differs instead of relying on the output log being noticed.</p>
   <pre is:raw><code># A visible assertion in the job that tests the application
 node --version
-node -e "if (process.versions.node.split('.')[0] !== '24') process.exit(1)"</code></pre>
+node -e "if (process.versions.node.split('.')[0] !== '26') process.exit(1)"</code></pre>
   <p>The check is intentionally simple: it prevents accidental drift from turning into a silent green result. Adjust the major to the service’s chosen target and keep that policy aligned with the deployment image.</p>
   <h2 id="verify">Verify the artifact that will run</h2>
   <p>Test the final image, not just the build stage. Multi-stage container builds can copy compiled output from one image into a runtime image with a different Node binary. Native modules may be tied to the build image’s ABI, operating system, CPU architecture, and C library. If the production image is distroless or Alpine-based, test that runtime family deliberately rather than extrapolating from a developer laptop.</p>

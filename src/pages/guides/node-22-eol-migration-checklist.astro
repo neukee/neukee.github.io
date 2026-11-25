@@ -1,12 +1,19 @@
 ---
 import GuideLayout from '../../layouts/GuideLayout.astro';
 
-const title = 'Node.js 22 EOL Migration Checklist: Move Safely to Node 24 or 26';
-const description = 'A practical Node.js 22 end-of-life migration plan with timeline, runtime inventory, seven engineering checks, rollout strategy, and executable before/after examples.';
+const title = 'Node.js 22 End of Life (April 30, 2027): Migration Checklist for Node 26 or 24';
+const description = 'Node.js 22 reaches end of life on April 30, 2027. Official support dates for 22, 24 and 26, how to choose a target, a seven-point audit and a staged rollout plan.';
 const path = '/guides/node-22-eol-migration-checklist/';
+const sources = [
+  { title: 'Node.js release schedule (nodejs/Release, schedule.json)', url: 'https://github.com/nodejs/Release#release-schedule' },
+  { title: 'Docker official images: node tags', url: 'https://github.com/docker-library/official-images/blob/master/library/node' },
+  { title: 'Node.js distribution policy (Corepack history)', url: 'https://github.com/nodejs/node/blob/main/doc/contributing/distribution.md' },
+  { title: 'Node.js 26 TLS docs: OpenSSL security level', url: 'https://nodejs.org/docs/latest-v26.x/api/tls.html#openssl-security-level' },
+  { title: 'npm docs: package.json engines', url: 'https://github.com/npm/cli/blob/latest/docs/lib/content/configuring-npm/package-json.md#engines' },
+];
 ---
 
-<GuideLayout {title} {description} canonicalPath={path}>
+<GuideLayout {title} {description} canonicalPath={path} published="2026-11-23" modified="2026-11-25" {sources}>
   <Fragment slot="toc">
     <a class="block hover:text-emerald-300" href="#timeline">Support timeline</a>
     <a class="block hover:text-emerald-300" href="#choose-target">Choose a target</a>
@@ -19,13 +26,24 @@ const path = '/guides/node-22-eol-migration-checklist/';
   <p>This checklist is designed for engineering leads who have more than one service and more than one deployment path. The most useful outcome is not “all manifests now say 24.” It is a verifiable inventory, a justified target, a list of known incompatibilities, and a staged release plan with a rollback decision made in advance.</p>
 
   <h2 id="timeline">Understand the support timeline</h2>
-  <p>Node release lines move through Current, Active LTS, Maintenance LTS, and end of life. The exact dates are maintained by the Node.js project; check its <a href="https://github.com/nodejs/Release" target="_blank" rel="noreferrer">release schedule</a> when budgeting a migration, because schedules can change. As of the planning dates referenced here, Node 22’s EOL is April 30, 2027. Node 24 is the LTS line suitable for many production upgrades, while Node 26 is the newer line to evaluate where the organization can accept its maturity and support phase.</p>
-  <p>A target choice should weigh how long the service will remain on the selected line, the support status of deployment platforms, native dependency compatibility, and the organization’s release cadence. “Latest” and “least change” are both incomplete policies. A team shipping weekly may be comfortable validating Node 26 now; a regulated service with quarterly release windows may rationally select Node 24 LTS and schedule a second move later. Record the rationale instead of letting an image tag make the decision by accident.</p>
+  <p>Node.js release lines move through Current, Active LTS, Maintenance LTS and end of life. These are the official dates for the lines that matter here; check the <a href="https://github.com/nodejs/Release" target="_blank" rel="noreferrer">release schedule</a> when you plan, because dates can change.</p>
+  <div class="overflow-x-auto">
+    <table>
+      <thead><tr><th>Line</th><th>Status (November 2026)</th><th>End of life</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js 22 "Jod"</td><td>Maintenance LTS since October 21, 2025</td><td>April 30, 2027</td></tr>
+        <tr><td>Node.js 24 "Krypton"</td><td>Maintenance LTS since October 20, 2026</td><td>April 30, 2028</td></tr>
+        <tr><td>Node.js 26 "Lithium"</td><td>Active LTS since October 28, 2026</td><td>April 30, 2029</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Node.js 26 is the default target: it is the Active LTS line and is supported a year longer than 24. Node.js 24 is a reasonable stop when a dependency or hosting platform doesn't support 26 yet, but it is already in maintenance, so plan the second move before April 2028. Record the reason for each service's target instead of letting an image tag decide by accident. Floating Docker tags already moved: in the official images, <code>node:lts</code> and <code>node:latest</code> now point to Node.js 26.</p>
+  <p>A target choice should also weigh how long the service will stay on the line, the support status of its deployment platform, native dependency compatibility and your release cadence. The changes between 22 and your target are listed in <a href="/guides/node-22-to-26-breaking-changes/">Node.js 22 to 26: every breaking change</a>.</p>
   <p>Separate the deadline into milestones. For example, inventory and ownership can finish well before the EOL date; representative services can enter a compatibility spike next; the first production canary should leave enough time to observe real traffic. Reserve a buffer for native rebuilds, vendor response times, and release freezes. A useful schedule has explicit “stop and reassess” gates, not just a date in a ticket.</p>
 
   <h2 id="choose-target">Choose a target for each service</h2>
   <p>Start with support policy, not a bulk edit. For each service, note whether its host supports the proposed Node line, whether its container base image is published for the target architecture, and whether every runtime used in local development and CI can install that version. A monorepo can have separate application and tooling runtimes; those constraints should be written down rather than collapsed into one number.</p>
-  <p>Use explicit version declarations and make them agree. Here, the old project pins Node 22 in its developer version file and engines range while a container still tracks Node 20. The after example selects Node 24 consistently; adapt patch versions and image digests to your actual platform and update them through your normal image-refresh process.</p>
+  <p>Use explicit version declarations and make them agree. Here, the old project pins Node 22 in its developer version file and engines range while a container still tracks Node 20. The after example selects Node 26 consistently; adapt patch versions and image digests to your actual platform and update them through your normal image-refresh process.</p>
   <pre is:raw><code>// Before: package.json
 {
   "engines": { "node": "22.x" }
@@ -38,22 +56,22 @@ const path = '/guides/node-22-eol-migration-checklist/';
 FROM node:20-alpine</code></pre>
   <pre is:raw><code>// After: package.json
 {
-  "engines": { "node": "&gt;=24 &lt;25" }
+  "engines": { "node": "&gt;=26 &lt;27" }
 }
 
 # After: .nvmrc
-24
+26
 
 # After: Dockerfile
-FROM node:24-alpine</code></pre>
-  <p>An engines range is a package-manager hint unless enforcement is configured. Keep it aligned with the actual runtime and add a CI assertion that fails when the selected major is outside the service’s supported range. Do not copy the same range into every package without considering tools, build images, and deployed functions separately.</p>
+FROM node:26-alpine</code></pre>
+  <p>An engines range is a hint unless enforcement is configured: npm's documentation calls the field advisory unless <code>engine-strict</code> is set, and then it only produces warnings when your package is installed as a dependency. Keep it aligned with the actual runtime and add a CI assertion that fails when the selected major is outside the service’s supported range. Do not copy the same range into every package without considering tools, build images, and deployed functions separately.</p>
 
   <h2 id="checklist">The seven-point engineering audit</h2>
   <ol>
-    <li><strong>Find every runtime selector.</strong> Search for <code>.nvmrc</code>, <code>.node-version</code>, Volta settings, <code>engines</code>, Dockerfiles, dev containers, CI matrices, release workflows, and platform-specific runtime declarations. Include scripts in sibling packages and infrastructure repositories.</li>
+    <li><strong>Find every runtime selector.</strong> Search for <code>.nvmrc</code>, <code>.node-version</code>, Volta settings, <code>engines</code>, Dockerfiles, dev containers, CI matrices, release workflows, and platform-specific runtime declarations. Include scripts in sibling packages and infrastructure repositories, and floating image tags such as <code>node:lts</code>, which now resolve to Node.js 26. If you use Corepack for pnpm or Yarn, note it: Node.js stopped distributing Corepack in 25.0.0, so the target image or CI setup has to provide it.</li>
     <li><strong>Inventory the actual dependency graph.</strong> Read the committed lockfile, not only direct dependencies. Flag native addons and packages with platform-specific optional dependencies. Confirm support in upstream documentation or test the exact resolved version under the target runtime; a package name alone is not proof of compatibility.</li>
     <li><strong>Check build and deployment parity.</strong> Build in the same operating system, libc family, CPU architecture, and image family used in production. A macOS developer build does not validate Alpine Linux binaries. Rebuild native modules in the target image and do not copy ABI-specific artifacts between incompatible stages.</li>
-    <li><strong>Exercise runtime APIs and cryptography.</strong> Inspect use of deprecated Node APIs, TLS configuration, custom certificate stores, OpenSSL provider behavior, and code that depends on undocumented runtime details. Run integration tests against the target major, including outbound TLS to representative endpoints.</li>
+    <li><strong>Exercise runtime APIs and cryptography.</strong> Inspect use of deprecated Node APIs, TLS configuration, custom certificate stores, OpenSSL provider behavior, and code that depends on undocumented runtime details. Run integration tests against the target major, including outbound TLS to representative endpoints. Node.js 22 runs OpenSSL at security level 1; Node.js 24 and 26 use level 2, which rejects RSA keys shorter than 2048 bits, so check client certificates, private CAs and partner endpoints.</li>
     <li><strong>Compare startup and operational signals.</strong> Measure cold start, memory, CPU, event-loop delay, shutdown behavior, and health-check readiness. Validate signals in a representative environment instead of inferring performance from a local benchmark.</li>
     <li><strong>Roll out with an explicit rollback.</strong> Keep the prior image or artifact available, define the metrics and error budget that trigger rollback, and verify database or queue changes are not coupled to a runtime rollback. A runtime downgrade cannot undo an incompatible persisted-data change.</li>
     <li><strong>Record evidence and ownership.</strong> Save the runtime matrix, tested lockfile, CI result, canary observations, and service owner in the change record. Assign an owner to every exception so “temporarily pinned” does not become an undocumented permanent state.</li>
@@ -68,5 +86,5 @@ FROM node:24-alpine</code></pre>
   <h2 id="done">A practical definition of done</h2>
   <p>Call the migration complete only when all production paths have an owner-approved target; the runtime declarations agree; native modules are built and exercised on the target platform; integration and smoke checks pass; and the canary has met its observation window. Also verify that the previous artifact can still be rolled back, that security scanning understands the new base image, and that operations documentation reflects the selected runtime.</p>
   <p>Finally, keep a record of what was not tested. If a third-party integration has no staging environment, state that limitation and add a compensating production monitor. If a rarely used route was not exercised, say so plainly. Honest uncertainty is more useful than a green badge whose scope nobody understands.</p>
-  <p>Neukee’s purpose is to make the pre-upgrade inventory and compatibility evidence easier to review: runtime drift, locked transitive packages, and source patterns all belong in the pull request conversation. It cannot replace a canary or a service owner’s judgment. Use the scanner to make the unknowns visible, then use your own deployment evidence to decide when the fleet is ready.</p>
+  <p>Neukee is an open-source, local-first scanner built to make that inventory easier to review. Version 0.1.0, planned for December 8, 2026, is built to flag Node.js versions that disagree across a repository, versions past end of life and dependencies that run install scripts. It cannot replace a canary or a service owner's judgment: use it to make the unknowns visible, then use your own deployment evidence to decide when the fleet is ready.</p>
 </GuideLayout>
